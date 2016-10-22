@@ -6,7 +6,6 @@ require 'optim'
 
 require 'LeNetModel'
 require 'DataLoader'
-require 'eval'
 
 local utils = require 'utils'
 local cmd = torch.CmdLine()
@@ -18,7 +17,7 @@ cmd:option('-init_from', '')
 cmd:option('-reset_iterations', 1)
 -- Optimization options
 cmd:option('-max_epochs', 50)
-cmd:option('-learning_rate', 1e-3)
+cmd:option('-learning_rate', 5e-5)
 cmd:option('-lr_decay_every', 5)
 cmd:option('-lr_decay_factor', 0.5)
 cmd:option('-max_decrease_iters', 0)
@@ -67,6 +66,30 @@ local function f( w )
 	return loss, grad_params
 end
 
+local function eval( dataset )
+	-- set model state as 'test'
+	model:evaluate()
+	local num_eval = loader.split_sizes[dataset]
+	local eval_loss = 0
+	local count = 0
+	for j = 1, num_eval do
+		local xv, yv = loader:nextBatch(dataset)
+		xv, yv = xv:type(dtype), yv:type(dtype)
+		local scores = model:forward(xv)
+		local _, indices = torch.max(scores, 2)
+		indices:add(-1)
+		eval_loss = eval_loss + crit:forward(scores, yv)
+		count = count + indices:eq(yv:type('torch.CudaLongTensor')):sum()
+	end
+	eval_loss = eval_loss / num_eval
+	local eval_accuracy = count / loader.set_sizes[dataset]
+	print(string.format('%s_loss = %f', dataset, eval_loss))
+	print(string.format('%s_accuracy = %f', dataset, eval_accuracy))
+	-- reset model state as 'train'
+	model:training()
+	return eval_loss, eval_accuracy
+end
+
 local optim_config = {
 	learning_rate = opt.learning_rate
 }
@@ -74,6 +97,7 @@ local num_train = loader.split_sizes['train']
 local num_iterations = opt.max_epochs * num_train
 local train_loss_history = {}
 local val_loss_history = {}
+local val_loss_history_it = {}
 local last_val_accuracy = 0
 local decreasing = 0
 local plotter = Plotter('plot/out.json')
@@ -88,8 +112,8 @@ for i = start_i + 1, num_iterations do
 	if i % num_train == 0 then
 		-- decay learning rate
 		if epoch % opt.lr_decay_every == 0 then
-			local old_lr = optim_config.learningRate
-			optim_config = {learningRate = old_lr * opt.lr_decay_factor}
+			local old_lr = optim_config.learning_rate
+			optim_config = {learning_rate = old_lr * opt.lr_decay_factor}
 		end
 		-- avoid overfit
 		if opt.max_decrease_iters > 0 then

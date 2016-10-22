@@ -3,9 +3,8 @@ local cjson = require 'cjson'
 local utils = {}
 
 function utils.write_json(path, obj)
-  local s = cjson.encode(obj)
   local f = io.open(path, 'w') 
-  f:write(s)
+  f:write(cjson.encode(obj))
   f:close()
 end
 
@@ -50,7 +49,7 @@ function Plotter:add(fig_id, plot_id, iter, data)
   table.insert(plot['y'], data)
 
   local file = io.open(self.path, 'w')
-  file:write(json.encode(self.figures))
+  file:write(cjson.encode(self.figures))
   file:close()
 end
 

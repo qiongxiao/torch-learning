@@ -11,13 +11,23 @@ Code style and organization follow [torch-rnn by jcjohnson](https://github.com/j
 "utils.lua" comes from [torch-rnn by jcjohnson](https://github.com/jcjohnson/torch-rnn) and [trainplot by joeyhng](https://github.com/joeyhng/trainplot)
 
 ## Usage
+
 To train a model and use it to classify MNIST data, you'll need to follow two simple steps:
+
 ### Step 1: Train the model
+
 You can run the training script like this:
+
 > th train.lua
+
 You can change the batchsize and max_epoches like this
+
 > th train.lua -batch_size 100 -max_epoches 20
+
 ### Step 3: Test the model
+
 Run like this
+
 >th test.lua -checkpoint cv/checkpoint_20000.t7
+
 This will load the trained checkpoint cv/checkpoint_20000.t7 from the previous step, test the MNIST data from it.

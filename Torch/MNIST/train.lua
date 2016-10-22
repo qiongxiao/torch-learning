@@ -131,7 +131,7 @@ for i = start_i + 1, num_iterations do
 	-- Note that adam returns a singleton array of losses
 	local _, loss = optim.adam(f, params, optim_config)
 	table.insert(train_loss_history, loss[1])
-	plotter:add('Train Accuracy', 'Train', #train_loss_history, train_loss_history[#train_loss_history])
+	plotter:add('Loss', 'Train', #train_loss_history, train_loss_history[#train_loss_history])
 	if opt.print_every > 0 and i % opt.print_every == 0 then
 		local float_epoch = i / num_train + 1
 		local msg = 'Epoch %.2f / %d, i = %d / %d, loss = %f'
@@ -142,7 +142,7 @@ for i = start_i + 1, num_iterations do
 	local check_every = opt.checkpoint_every
 	if (check_every > 0 and i % check_every == 0) or i == num_iterations then
 		-- Evaluate loss on the validation set.
-		local val_loss, _ = eval('val')
+		local val_loss, val_accuracy = eval('val')
 		table.insert(val_loss_history, val_loss)
 		table.insert(val_loss_history_it, i)
 		-- reset model state as 'train'
@@ -159,8 +159,8 @@ for i = start_i + 1, num_iterations do
 		-- Make sure the output directory exists before we try to write it
 		paths.mkdir(paths.dirname(filename))
 		utils.write_json(filename, checkpoint)
-		plotter:add('Val Accuracy', 'Validation', #val_loss_history, val_loss_history[#val_loss_history])
-
+		plotter:add('Loss', 'Validation', #train_loss_history, val_loss_history[#val_loss_history])
+		plotter:add('Accuracy', 'Validation', #val_loss_history, val_accuracy)
 		model:float()
 		checkpoint.model = model
 		local filename = string.format('%s_%d.t7', opt.checkpoint_name, i)

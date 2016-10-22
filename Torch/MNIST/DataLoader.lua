@@ -22,6 +22,7 @@ function DataLoader:__init(batch_size)
 	self.split_sizes = {}
 
 	for split, v in pairs(dataset) do
+		--v['x'] = v['x'] - v['x']:mean()
 		local num_examples = v['x']:size(1)
 		local num_batches = math.floor(num_examples / batch_size)
 		local extra = num_examples - num_batches * batch_size

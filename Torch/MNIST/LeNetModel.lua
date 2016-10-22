@@ -19,9 +19,9 @@ function LN:__init()
 	self.net:add(nn.Linear(50*4*4, 500))
 	self.net:add(nn.ReLU())
 	-- stage FC - 2
-	self.net:add(nn.Linear(500, 84))
-	self.net:add(nn.ReLU())
-	self.net:add(nn.Linear(84, 10))
+	--self.net:add(nn.Linear(500, 84))
+	--self.net:add(nn.ReLU())
+	self.net:add(nn.Linear(500, 10))
 
 	self.net = require('weight-init')(self.net, 'xavier')
 end

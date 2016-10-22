@@ -10,9 +10,9 @@ function DataLoader:__init(batch_size)
 	local testset = mnist.testdataset()
 
 	local dataset = {
-		train = {x=trainset.data[{{1, 50000}}]:double(), y=trainset.label[{{1, 50000}}]},
-		val = {x=trainset.data[{{50001, 60000}}]:double(), y=trainset.label[{{50001, 60000}}]},
-		test = {x=testset.data:double(), y=testset.label}
+		train = {x=trainset.data[{{1, 50000}}]:double(), y=trainset.label[{{1, 50000}}]:long():add(1)},
+		val = {x=trainset.data[{{50001, 60000}}]:double(), y=trainset.label[{{50001, 60000}}]:long():add(1)},
+		test = {x=testset.data:double(), y=testset.label:long():add(1)}
 	}
 
 	self.batch_size = batch_size

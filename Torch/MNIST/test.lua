@@ -16,7 +16,8 @@ local opt = cmd:parse(arg)
 local dtype = 'torch.CudaTensor'
 local checkpoint = torch.load(opt.checkpoint)
 
-local odel = checkpoint.model
+local model = checkpoint.model:type(dtype)
+local crit = nn.CrossEntropyCriterion():type(dtype)
 local loader = DataLoader(checkpoint.opt.batch_size)
 
 local function eval( dataset )
@@ -24,14 +25,14 @@ local function eval( dataset )
 	model:evaluate()
 	local num_eval = loader.split_sizes[dataset]
 	local eval_loss = 0
+	local count = 0
 	for j = 1, num_eval do
 		local xv, yv = loader:nextBatch(dataset)
 		xv, yv = xv:type(dtype), yv:type(dtype)
 		local scores = model:forward(xv)
 		local _, indices = torch.max(scores, 2)
-		indices:add(-1)
-		count = count + indices:eq(yv):sum()
 		eval_loss = eval_loss + crit:forward(scores, yv)
+		count = count + indices:eq(yv:type('torch.CudaLongTensor')):sum()
 	end
 	eval_loss = eval_loss / num_eval
 	local eval_accuracy = count / loader.set_sizes[dataset]

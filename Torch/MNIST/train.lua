@@ -77,7 +77,6 @@ local function eval( dataset )
 		xv, yv = xv:type(dtype), yv:type(dtype)
 		local scores = model:forward(xv)
 		local _, indices = torch.max(scores, 2)
-		indices:add(-1)
 		eval_loss = eval_loss + crit:forward(scores, yv)
 		count = count + indices:eq(yv:type('torch.CudaLongTensor')):sum()
 	end

@@ -17,7 +17,7 @@ cmd:option('-init_from', '')
 cmd:option('-reset_iterations', 1)
 -- Optimization options
 cmd:option('-max_epochs', 50)
-cmd:option('-learning_rate', 5e-5)
+cmd:option('-learning_rate', 5e-3)
 cmd:option('-lr_decay_every', 5)
 cmd:option('-lr_decay_factor', 0.5)
 cmd:option('-max_decrease_iters', 0)
@@ -91,7 +91,7 @@ local function eval( dataset )
 end
 
 local optim_config = {
-	learning_rate = opt.learning_rate
+	learningRate = opt.learning_rate
 }
 local num_train = loader.split_sizes['train']
 local num_iterations = opt.max_epochs * num_train
@@ -112,8 +112,8 @@ for i = start_i + 1, num_iterations do
 	if i % num_train == 0 then
 		-- decay learning rate
 		if epoch % opt.lr_decay_every == 0 then
-			local old_lr = optim_config.learning_rate
-			optim_config = {learning_rate = old_lr * opt.lr_decay_factor}
+			local old_lr = optim_config.learningRate
+			optim_config = {learningRate = old_lr * opt.lr_decay_factor}
 		end
 		-- avoid overfit
 		if opt.max_decrease_iters > 0 then

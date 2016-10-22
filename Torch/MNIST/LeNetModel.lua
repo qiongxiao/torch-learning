@@ -7,19 +7,19 @@ function LN:__init()
 	parent.__init(self)
 	self.net = nn.Sequential()
 	-- stage CONV - 1
-	self.net:add(nn.SpatialConvolution(1, 6, 5, 5))
+	self.net:add(nn.SpatialConvolution(1, 20, 5, 5))
 	self.net:add(nn.ReLU())
 	self.net:add(nn.SpatialMaxPooling(2, 2, 2, 2, 0, 0))
 	-- stage CONV - 2
-	self.net:add(nn.SpatialConvolution(6, 16, 5, 5))
+	self.net:add(nn.SpatialConvolution(20, 50, 5, 5))
 	self.net:add(nn.ReLU())
 	self.net:add(nn.SpatialMaxPooling(2, 2, 2, 2, 0, 0))
 	-- stage FC - 1
-	self.net:add(nn.Reshape(16*4*4))
-	self.net:add(nn.Linear(16*4*4, 120))
+	self.net:add(nn.Reshape(50*4*4))
+	self.net:add(nn.Linear(50*4*4, 500))
 	self.net:add(nn.ReLU())
 	-- stage FC - 2
-	self.net:add(nn.Linear(120, 84))
+	self.net:add(nn.Linear(500, 84))
 	self.net:add(nn.ReLU())
 	self.net:add(nn.Linear(84, 10))
 
@@ -30,12 +30,12 @@ function LN:updateOutput( input )
 	return self.net:forward(input)
 end
 
-function LN:backward( input, gradOutput )
-	return self.net:backward(input, gradOutput)
+function LN:backward( input, gradOutput, scale )
+	return self.net:backward(input, gradOutput, scale)
 end
 
-function LN:Parameters()
-	return self.net:Parameters()
+function LN:parameters()
+	return self.net:parameters()
 end
 
 function LN:training()

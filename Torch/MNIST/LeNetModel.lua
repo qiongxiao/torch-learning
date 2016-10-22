@@ -16,12 +16,11 @@ function LN:__init()
 	self.net:add(nn.SpatialMaxPooling(2, 2, 2, 2, 0, 0))
 	-- stage FC - 1
 	self.net:add(nn.Reshape(64*4*4))
-	self.net:add(nn.Linear(64*4*4, 500))
+	self.net:add(nn.Dropout())
+	self.net:add(nn.Linear(64*4*4, 1024))
 	self.net:add(nn.ReLU())
 	-- stage FC - 2
-	self.net:add(nn.Linear(500, 84))
-	self.net:add(nn.ReLU())
-	self.net:add(nn.Linear(84, 10))
+	self.net:add(nn.Linear(1024, 10))
 
 	self.net = require('weight-init')(self.net, 'xavier')
 end

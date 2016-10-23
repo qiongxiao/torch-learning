@@ -38,8 +38,6 @@ local function eval( dataset )
 	local eval_accuracy = count / loader.set_sizes[dataset]
 	print(string.format('%s_loss = %f', dataset, eval_loss))
 	print(string.format('%s_accuracy = %f', dataset, eval_accuracy))
-	-- reset model state as 'train'
-	model:training()
 	return eval_loss, eval_accuracy
 end
 

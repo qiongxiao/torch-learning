@@ -23,7 +23,7 @@ function CNN:__init(kwargs, output_dim)
 	local cnn
 	if self.model_type == 'VGG' then
 		cnn = nn.VGGNet(kwargs, output_dim)
-	else if self.model_type == 'SmallCNN' then
+	elseif self.model_type == 'SmallCNN' then
 		cnn = nn.SmallCNNet(kwargs, output_dim)
 	end
 

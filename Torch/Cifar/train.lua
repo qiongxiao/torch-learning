@@ -31,7 +31,7 @@ cmd:option('-lr_decay_factor', 0.5)
 cmd:option('-max_decrease_iters', 0)
 -- Output options
 cmd:option('-print_every', 1)
-cmd:option('-checkpoint_every', 1000)
+cmd:option('-checkpoint_every', 900)
 cmd:option('-checkpoint_name', 'cv/checkpoint')
 
 local opt = cmd:parse(arg)
@@ -178,6 +178,6 @@ for i = start_i + 1, num_iterations do
 		torch.save(filename, checkpoint)
 		model:type(dtype)
 		params, grad_params = model:getParameters()
-		collectgarbage()
 	end
+	collectgarbage()
 end

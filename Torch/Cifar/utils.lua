@@ -3,6 +3,13 @@ local cjson = require 'cjson'
 -- code from 'https://github.com/jcjohnson/torch-rnn/blob/master/util/utils.lua'
 local utils = {}
 
+function utils.read_json(path)
+  local f = io.open(path, 'r')
+  local s = f:read('*all')
+  f:close()
+  return cjson.decode(s)
+end
+
 function utils.write_json(path, obj)
 	local f = io.open(path, 'w') 
 	f:write(cjson.encode(obj))
@@ -24,14 +31,23 @@ end
 
 local Plotter = torch.class('Plotter')
 
-function Plotter:__init(path)
-	self.path = path
+function Plotter:__init(path, reset)
+	self.path = path .. '.json'
 	self.figures = {}
-end
-
--- Information string displayed in the page
-function Plotter:info(s)
-	self.figures['info_str'] = s
+	self.checkpoint_path = path .. '_checkpoint.json'
+	print('<plot init> loading plot')
+	if (not paths.filep(self.path)) then
+		paths.mkdir(paths.dirname(self.path))
+		self.figures['info_str'] = {created_time=io.popen('date'):read(), tag='Plot'}
+	end
+	if reset == 0 then
+		if paths.filep(self.checkpoint_path) then
+			self.figures = utils.read_json(self.checkpoint_path)
+			print('<plot init> fininsh loading plot')
+		else
+			assert(false, string.format('"%s" does not existed', self.checkpoint_path))
+		end
+	end
 end
 
 function Plotter:add(fig_id, plot_id, iter, data)
@@ -62,9 +78,16 @@ function Plotter:add(fig_id, plot_id, iter, data)
 	table.insert(plot['x'], iter)
 	table.insert(plot['y'], data)
 
+	utils.write_json(self.path, self.figures)
+	--[[
 	local file = io.open(self.path, 'w')
 	file:write(cjson.encode(self.figures))
 	file:close()
+	--]]
+end
+
+function Plotter:checkpoint()
+	utils.write_json(self.checkpoint_path, self.figures)
 end
 
 return utils

@@ -21,7 +21,7 @@ function DataLoader:__init(kwargs)
 		os.execute('tar xvf ./data/cifar-10-torch.tar.gz -C ./data')
 	end
 
-	print '<data init> data loading'
+	print('<data init> data loading')
 
 	local dataset = { train = {}, val={}, test={} }
 	local train_size
@@ -68,7 +68,7 @@ function DataLoader:__init(kwargs)
 	-- preprocess the image
 	if preprocess == "nnc" then
 		-- code from 'https://github.com/torch/demos/blob/master/train-on-cifar/train-on-cifar.lua'
-		print '<data init> preprocessing data (color space + normalization)'
+		print('<data init> preprocessing data (color space + normalization)')
 		normalization = nn.SpatialContrastiveNormalization(1, image.gaussian1D(7))
 		for split, v in pairs(self.set_sizes) do
 			for i = 1, v do
@@ -89,7 +89,7 @@ function DataLoader:__init(kwargs)
 			v['x']:select(2,3):div(std_v)
 		end
 	elseif preprocess == "simple" then
-		print '<data init> preprocessing data (simple normalization)'
+		print('<data init> preprocessing data (simple normalization)')
 		for i = 1, 3 do
 			local mean = dataset['train']['x']:select(2,i):mean()
 			local std = dataset['train']['x']:select(2,i):std()
@@ -104,7 +104,7 @@ function DataLoader:__init(kwargs)
 	collectgarbage()
 
 	-- make batches
-	print '<data init> making batches'
+	print('<data init> making batches')
 	self.x_splits = { train={}, val={}, test={} }
 	self.y_splits = { train={}, val={}, test={} }
 	self.split_sizes = {}
@@ -127,7 +127,7 @@ function DataLoader:__init(kwargs)
 		end
 		self.split_sizes[split] = num_batches
 	end
-	print '<data init> finished data loading'
+	print('<data init> finished data loading')
 end
 
 

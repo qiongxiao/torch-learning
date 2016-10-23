@@ -25,13 +25,12 @@ cmd:option('-spatial_batchnorm', 1)
 cmd:option('-data_flip', 0)
 -- Optimization options
 cmd:option('-max_epochs', 50)
-cmd:option('-learning_rate', 5e-3)
+cmd:option('-learning_rate', 1e-2)
 cmd:option('-lr_decay_every', 5)
-cmd:option('-lr_decay_factor', 0.5)
-cmd:option('-max_decrease_iters', 0)
+cmd:option('-lr_decay_factor', 0.95)
 -- Output options
 cmd:option('-print_every', 1)
-cmd:option('-checkpoint_every', 900)
+cmd:option('-checkpoint_every', 1)
 cmd:option('-checkpoint_name', 'cv/checkpoint')
 
 local opt = cmd:parse(arg)
@@ -40,26 +39,48 @@ local dtype = 'torch.CudaTensor'
 local classes = {'airplane', 'automobile', 'bird', 'cat', 
 				 'deer', 'dog', 'frog', 'horse', 'ship', 'truck'}
 
--- Initialize the model and criterion
+-- Initialize
+-- load data
+local loader = DataLoader(opt)
+-- initalize the model
 local model = nil
+-- Softmax
+local crit = nn.CrossEntropyCriterion():type(dtype)
+-- initalize the training parameters
+local learning_rate = opt.learning_rate
 local start_i = 0
 
+local num_train = loader.split_sizes['train']
+local num_iterations = opt.max_epochs * num_train
+local check_every = opt.checkpoint_every * num_train
+
+local train_loss_history = {}
+local val_loss_history = {}
+local val_loss_history_it = {}
+
+local plotter = Plotter('plot/out', 1)
+
 if opt.init_from ~= '' then
-	print('Initializing from ', opt.init_from)
+	print('<model init> initializing from ', opt.init_from)
 	local checkpoint = torch.load(opt.init_from)
 	model = checkpoint.model:type(dtype)
 	if opt.reset_iterations == 0 then
 		start_i = checkpoint.i
+		learning_rate = checkpoint.opt.learning_rate * ((checkpoint.opt.lr_decay_factor)^(math.floor((math.floor(start_i / num_train) + 1) / checkpoint.opt.lr_decay_every)))
+		train_loss_history = checkpoint.train_loss_history
+		val_loss_history = checkpoint.val_loss_history
+		val_loss_history_it = checkpoint.val_loss_history_it
+		plotter = Plotter('plot/out', 0)
 	end
 else
 	model = nn.CNNModel(opt, #classes):type(dtype)
 end
 
 local params, grad_params = model:getParameters()
--- Loss functions: Softmax
-local crit = nn.CrossEntropyCriterion():type(dtype)
 
-local loader = DataLoader(opt)
+local optim_config = {
+	learningRate = learning_rate
+}
 
 local function f( w )
 	assert(w == params)
@@ -100,20 +121,6 @@ local function eval( dataset )
 	return eval_loss, eval_accuracy
 end
 
-local optim_config = {
-	learningRate = opt.learning_rate
-}
-local num_train = loader.split_sizes['train']
-local num_iterations = opt.max_epochs * num_train
-local train_loss_history = {}
-local val_loss_history = {}
-local val_loss_history_it = {}
-local last_val_accuracy = 0
-local decreasing = 0
-local plotter = Plotter('plot/out.json')
-paths.mkdir(paths.dirname('plot/out.json'))
-plotter:info({created_time=io.popen('date'):read(), tag='Plot'})
-
 -- set model state as 'train'
 model:training()
 for i = start_i + 1, num_iterations do
@@ -124,17 +131,6 @@ for i = start_i + 1, num_iterations do
 		if epoch % opt.lr_decay_every == 0 then
 			local old_lr = optim_config.learningRate
 			optim_config = {learningRate = old_lr * opt.lr_decay_factor}
-		end
-		-- avoid overfit
-		if opt.max_decrease_iters > 0 then
-			local _, val_accuracy = eval('val')
-			if val_accuracy < last_val_accuracy then
-				if decreasing > opt.max_decrease_iters then break end
-				decreasing = decreasing + 1
-			else
-				decreasing = 0
-			end
-			last_val_accuracy = val_accuracy
 		end
 	end
 	-- Take a gradient step and maybe print
@@ -149,7 +145,6 @@ for i = start_i + 1, num_iterations do
 		print(string.format(unpack(args)))
 	end
 	-- Maybe save a checkpoint
-	local check_every = opt.checkpoint_every
 	if (check_every > 0 and i % check_every == 0) or i == num_iterations then
 		-- Evaluate loss on the validation set.
 		local val_loss, val_accuracy = eval('val')
@@ -171,9 +166,10 @@ for i = start_i + 1, num_iterations do
 		utils.write_json(filename, checkpoint)
 		plotter:add('Loss', 'Validation', #train_loss_history, val_loss_history[#val_loss_history])
 		plotter:add('Accuracy', 'Validation', #val_loss_history, val_accuracy)
+		plotter:checkpoint()
 		model:float()
 		checkpoint.model = model
-		local filename = string.format('%s_%d.t7', opt.checkpoint_name, i)
+		local filename = string.format('%s_%d_%d.t7', opt.checkpoint_name, epoch - 1, i)
 		paths.mkdir(paths.dirname(filename))
 		torch.save(filename, checkpoint)
 		model:type(dtype)

@@ -39,20 +39,24 @@ function DataLoader:__init(kwargs)
 			dataset['train']['x'][{{(i-1)*10000+1, i*10000}}] = set.data:t()
 			dataset['train']['y'][{{(i-1)*10000+1, i*10000}}] = set.labels
 		end
+		local set = torch.load('data/cifar-10-batches-t7/data_batch_5.t7', 'ascii')
+		dataset['train']['x'][{{40001, 45000}}] = set.data:t():double()[{{1, 5000}}]
+		dataset['train']['y'][{{40001, 45000}}] = set.labels:double()[{{1, 5000}}]
 		dataset['train']['y'] = dataset['train']['y'] + 1
+		dataset['val']['x'] = set.data:t():double()[{{5001, 10000}}]:reshape(val_size, 3, 32, 32)
+		dataset['val']['y'] = set.labels[1]:double()[{{5001, 10000}}] + 1
 	else
 		train_size = 2000
 		val_size = 1000
 		test_size = 1000
-		local set = torch.load('data/cifar-10-batches-t7/data_batch_1.t7', 'ascii')
+		local set = torch.load('data/cifar-10-batches-t7/data_batch_' .. math.random(1,5)..'.t7', 'ascii')
 		dataset['train']['x'] = set.data:t():double()[{{1, train_size}}]
 		dataset['train']['y'] = set.labels[1]:double()[{{1, train_size}}] + 1
+		local set = torch.load('data/cifar-10-batches-t7/data_batch_5.t7', 'ascii')
+		dataset['val']['x'] = set.data:t():double()[{{10000-val_size+1, 10000}}]:reshape(val_size, 3, 32, 32)
+		dataset['val']['y'] = set.labels[1]:double()[{{10000-val_size+1, 10000}}] + 1
 	end
 	dataset['train']['x'] = dataset['train']['x']:reshape(train_size, 3, 32, 32)
-
-	local set = torch.load('data/cifar-10-batches-t7/data_batch_5.t7', 'ascii')
-	dataset['val']['x'] = set.data:t():double()[{{1, val_size}}]:reshape(val_size, 3, 32, 32)
-	dataset['val']['y'] = set.labels[1]:double()[{{1, val_size}}] + 1
 
 	set = torch.load('data/cifar-10-batches-t7/test_batch.t7', 'ascii')
 	dataset['test']['x'] = set.data:t():double()[{{1, test_size}}]:reshape(test_size, 3, 32, 32)

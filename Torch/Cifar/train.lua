@@ -12,7 +12,7 @@ local cmd = torch.CmdLine()
 
 -- Dataset options
 cmd:option('-batch_size', 50)
-cmd:option('-preprocess', 'nnc')
+cmd:option('-preprocess', 'simple')
 cmd:option('-train_full', 1)
 -- Model options
 cmd:option('-init_from', '')

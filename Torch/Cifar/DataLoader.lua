@@ -84,7 +84,7 @@ function DataLoader:__init(kwargs)
 			v['x']:select(2,3):add(-mean_v)
 			v['x']:select(2,3):div(std_v)
 		end
-	else
+	elseif preprocess == "simple" then
 		print '<data init> preprocessing data (simple normalization)'
 		for i = 1, 3 do
 			local mean = dataset['train']['x']:select(2,i):mean()
@@ -94,6 +94,8 @@ function DataLoader:__init(kwargs)
 				v['x']:select(2,i):div(std)
 			end
 		end
+	else
+		assert(false, string.format('"%s" is not an option for preprocess', preprocess))
 	end
 	collectgarbage()
 

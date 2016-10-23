@@ -5,7 +5,7 @@ local utils = require 'utils'
 
 local VN, parent = torch.class('nn.VGGNet', 'nn.Module')
 
-function VN:__init(kwargs)
+function VN:__init(kwargs, output_dim)
 	parent.__init(self)
 	self.conv_dropout = utils.get_kwarg(kwargs, 'conv_dropout')
 	self.spatial_batchnorm = utils.get_kwarg(kwargs, 'spatial_batchnorm')
@@ -90,7 +90,7 @@ function VN:__init(kwargs)
 	if self.dropout > 0 then
 		self.net:add(nn.Dropout(self.dropout))
 	end
-	self.net:add(nn.Linear(512, 10))
+	self.net:add(nn.Linear(512, output_dim))
 
 	self.net = require('weight-init')(self.net, 'xavier')
 end

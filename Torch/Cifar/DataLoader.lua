@@ -10,8 +10,8 @@ function DataLoader:__init(kwargs)
 	local batch_size = utils.get_kwarg(kwargs, 'batch_size')
 	self.batch_size = batche_size
 	local preprocess = utils.get_kwarg(kwargs, 'preprocess')
-	local train_full = utils.get_kwarg(kwargs, 'full')
-	local train_size = train_full and 40000 or 2000
+	local train_full = utils.get_kwarg(kwargs, 'train_full')
+
 	-- first download dataset
 	if not paths.dirp('data/cifar-10-batches-t7') then
 		local www = 'http://torch7.s3-website-us-east-1.amazonaws.com/data/cifar-10-torch.tar.gz'
@@ -21,13 +21,12 @@ function DataLoader:__init(kwargs)
 
 	print '<data init> data loading'
 
-	local dataset = {
-		train = { x=torch.Tensor(40000, 3072), y=torch.Tensor(40000) },
-		val={},
-		test={}
-	}
+	local dataset = { train = {}, val={}, test={} }
 
-	if train_full then
+	if train_full == 1 then
+		train_size = 40000
+		dataset['train']['x'] = torch.Tensor(train_size, 3072)
+		dataset['train']['y'] = torch.Tensor(train_size)
 		for i = 1, 4 do
 			local set = torch.load('data/cifar-10-batches-t7/data_batch_' .. i .. '.t7', 'ascii')
 			dataset['train']['x'][{{(i-1)*10000+1, i*10000}}] = set.data:t()
@@ -35,6 +34,7 @@ function DataLoader:__init(kwargs)
 		end
 		dataset['train']['y'] = dataset['train']['y'] + 1
 	else
+		train_size = 2000
 		local set = torch.load('data/cifar-10-batches-t7/data_batch_1.t7', 'ascii')
 		dataset['train']['x'] = set.data:t():double()[{{1, train_size}}]
 		dataset['train']['y'] = set.labels[1]:double()[{{1, train_size}}] + 1
@@ -92,7 +92,7 @@ function DataLoader:__init(kwargs)
 	self.x_splits = { train={}, val={}, test={} }
 	self.y_splits = { train={}, val={}, test={} }
 	self.split_sizes = {}
-	self.split_idxs = {train=1, val=1, test=1}
+	self.split_idxs = { train=1, val=1, test=1 }
 
 	for split, v in pairs(dataset) do
 		local num_examples = v['x']:size(1)

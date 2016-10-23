@@ -5,16 +5,11 @@ require 'VGGNet'
 
 local utils = require 'utils'
 
-local VN, parent = torch.class('nn.NetModel', 'nn.Module')
+local CNN, parent = torch.class('nn.CNNModel', 'nn.Module')
 
-function VN:__init(kwargs)
+function CNN:__init(kwargs, output_dim)
 	parent.__init(self)
-	local batch_size = utils.get_kwarg(kwargs, 'batch_size')
 	self.data_flip = utils.get_kwarg(kwargs, 'data_flip')
-	self.conv_dropout = utils.get_kwarg(kwargs, 'conv_dropout')
-	self.spatial_batchnorm = utils.get_kwarg(kwargs, 'spatial_batchnorm')
-	self.dropout = utils.get_kwarg(kwargs, 'dropout')
-	self.batchnorm = utils.get_kwarg(kwargs, 'batchnorm')
 	self.model_type = utils.get_kwarg(kwargs, 'model_type')
 
 	self.net = nn.Sequential()
@@ -25,30 +20,30 @@ function VN:__init(kwargs)
 
 	local cnn
 	if self.model_type == 'VGG' then
-		cnn = nn.VGGNet(kwargs)
+		cnn = nn.VGGNet(kwargs, output_dim)
 	end
 
 	self.net:add(cnn)
 end
 
-function VN:updateOutput( input )
+function CNN:updateOutput( input )
 	return self.net:forward(input)
 end
 
-function VN:backward( input, gradOutput, scale )
+function CNN:backward( input, gradOutput, scale )
 	return self.net:backward(input, gradOutput, scale)
 end
 
-function VN:parameters()
+function CNN:parameters()
 	return self.net:parameters()
 end
 
-function VN:training()
+function CNN:training()
 	self.net:training()
 	parent.training(self)
 end
 
-function VN:evaluate()
+function CNN:evaluate()
 	self.net:evaluate()
 	parent.evaluate(self)
 end

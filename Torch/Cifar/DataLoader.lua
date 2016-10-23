@@ -41,7 +41,7 @@ function DataLoader:__init(kwargs)
 		end
 		local set = torch.load('data/cifar-10-batches-t7/data_batch_5.t7', 'ascii')
 		dataset['train']['x'][{{40001, 45000}}] = set.data:t():double()[{{1, 5000}}]
-		dataset['train']['y'][{{40001, 45000}}] = set.labels:double()[{{1, 5000}}]
+		dataset['train']['y'][{{40001, 45000}}] = set.labels[1]:double()[{{1, 5000}}]
 		dataset['train']['y'] = dataset['train']['y'] + 1
 		dataset['val']['x'] = set.data:t():double()[{{5001, 10000}}]:reshape(val_size, 3, 32, 32)
 		dataset['val']['y'] = set.labels[1]:double()[{{5001, 10000}}] + 1

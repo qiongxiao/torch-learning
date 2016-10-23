@@ -83,7 +83,7 @@ function VN:__init(kwargs, output_dim)
 	end
 	self.net:add(nn.Linear(512, 512))
 	if self.batchnorm == 1 then
-		self.net:add(nn.BatchNoramlization(512))
+		self.net:add(nn.BatchNormalization(512))
 	end
 	self.net:add(nn.ReLU())
 	-- stage FC 2

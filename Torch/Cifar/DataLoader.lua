@@ -14,17 +14,24 @@ function DataLoader:__init(kwargs)
 
 	-- first download dataset
 	if not paths.dirp('data/cifar-10-batches-t7') then
-		local www = 'http://torch7.s3-website-us-east-1.amazonaws.com/data/cifar-10-torch.tar.gz'
-		local tar = paths.basename(www)
-		os.execute('wget -P ./data/ ' .. www .. '; '.. 'tar xvf ./data/' .. tar)
+		if not paths.filep('data/cifar-10-torch.tar.gz') then
+			local www = 'http://torch7.s3-website-us-east-1.amazonaws.com/data/cifar-10-torch.tar.gz'
+			os.execute('wget -P ./data/ ' .. www)
+		end
+		os.execute('tar xvf ./data/cifar-10-torch.tar.gz -C ./data')
 	end
 
 	print '<data init> data loading'
 
 	local dataset = { train = {}, val={}, test={} }
+	local train_size
+	local val_size
+	local test_size
 
 	if train_full == 1 then
-		train_size = 40000
+		train_size = 45000
+		val_size = 5000
+		test_size = 10000
 		dataset['train']['x'] = torch.Tensor(train_size, 3072)
 		dataset['train']['y'] = torch.Tensor(train_size)
 		for i = 1, 4 do
@@ -35,6 +42,8 @@ function DataLoader:__init(kwargs)
 		dataset['train']['y'] = dataset['train']['y'] + 1
 	else
 		train_size = 2000
+		val_size = 1000
+		test_size = 1000
 		local set = torch.load('data/cifar-10-batches-t7/data_batch_1.t7', 'ascii')
 		dataset['train']['x'] = set.data:t():double()[{{1, train_size}}]
 		dataset['train']['y'] = set.labels[1]:double()[{{1, train_size}}] + 1
@@ -42,14 +51,14 @@ function DataLoader:__init(kwargs)
 	dataset['train']['x'] = dataset['train']['x']:reshape(train_size, 3, 32, 32)
 
 	local set = torch.load('data/cifar-10-batches-t7/data_batch_5.t7', 'ascii')
-	dataset['val']['x'] = set.data:t():double():reshape(10000, 3, 32, 32)
-	dataset['val']['y'] = set.labels[1]:double() + 1
+	dataset['val']['x'] = set.data:t():double()[{{1, val_size}}]:reshape(val_size, 3, 32, 32)
+	dataset['val']['y'] = set.labels[1]:double()[{{1, val_size}}] + 1
 
 	set = torch.load('data/cifar-10-batches-t7/test_batch.t7', 'ascii')
-	dataset['test']['x'] = set.data:t():double():reshape(10000, 3, 32, 32)
-	dataset['test']['y'] = set.labels[1]:double() + 1
+	dataset['test']['x'] = set.data:t():double()[{{1, test_size}}]:reshape(test_size, 3, 32, 32)
+	dataset['test']['y'] = set.labels[1]:double()[{{1, test_size}}] + 1
 
-	self.set_sizes = { train=train_size, val=10000, test=10000 }
+	self.set_sizes = { train=train_size, val=val_size, test=test_size }
 
 	collectgarbage()
 	-- preprocess the image
@@ -89,6 +98,7 @@ function DataLoader:__init(kwargs)
 	collectgarbage()
 
 	-- make batches
+	print '<data init> making batches'
 	self.x_splits = { train={}, val={}, test={} }
 	self.y_splits = { train={}, val={}, test={} }
 	self.split_sizes = {}
@@ -100,19 +110,18 @@ function DataLoader:__init(kwargs)
 		local extra = num_examples - num_batches * batch_size
 
 		for idx = 1, num_batches do
-			table.insert(self.x_splits[split], v['x'][{{(idx-1)*batch_size+1, idx*batch_size}}]:view(batch_size, 1, 28, -1))
+			table.insert(self.x_splits[split], v['x'][{{(idx-1)*batch_size+1, idx*batch_size}}])
 			table.insert(self.y_splits[split], v['y'][{{(idx-1)*batch_size+1, idx*batch_size}}])
 		end
 
 		if extra ~= 0 then
 			num_batches = num_batches + 1
-			table.insert(self.x_splits[split], v['x'][{{num_examples-extra+1, num_examples}}]:view(batch_size, 1, 28, -1))
+			table.insert(self.x_splits[split], v['x'][{{num_examples-extra+1, num_examples}}])
 			table.insert(self.y_splits[split], v['y'][{{num_examples-extra+1, num_examples}}])
 		end
 		self.split_sizes[split] = num_batches
 	end
-
-	
+	print '<data init> finished data loading'
 end
 
 

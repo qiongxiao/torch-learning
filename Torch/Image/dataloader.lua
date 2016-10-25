@@ -52,7 +52,7 @@ function DataLoader:__init(dataset, opt, split)
 end
 
 function DataLoader:size()
-   return math.ceil(self.__size / self.batchsize)
+	return math.ceil(self.__size / self.batchsize)
 end
 
 function DataLoader:run()

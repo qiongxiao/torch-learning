@@ -1,4 +1,4 @@
---[[ code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/cifar10.lua
+--[[ code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/cifar100.lua
 --
 --  Copyright (c) 2016, Facebook, Inc.
 --  All rights reserved.
@@ -7,7 +7,7 @@
 --  LICENSE file in the root directory of this source tree. An additional grant
 --  of patent rights can be found in the PATENTS file in the same directory.
 --
---  CIFAR-10 dataset loader
+--  CIFAR-100 dataset loader
 --
 --]]
 local t = require 'datasets/image_transform'
@@ -38,7 +38,7 @@ function CifarDataset:size()
 	return self.imageInfo.data:size(1)
 end
 
--- Computed from entire CIFAR-10 training set
+-- Computed from entire CIFAR-100 training set
 local meanstd = {
 	rgb = {
 		mean = {129.3, 124.1, 112.4},

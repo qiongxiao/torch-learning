@@ -143,7 +143,7 @@ function Trainer:computeScore(output, target, nCrops)
 		output = output:view(output:size(1) / nCrops, nCrops, output:size(2))
 		--:exp()
 			:sum(2):squeeze(2)
-   end
+	end
 
 	-- Computes the top1 and top5 error rate
 	local batchsize = output:size(1)

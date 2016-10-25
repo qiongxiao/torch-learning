@@ -32,7 +32,7 @@ local function convertToTensor(files)
 	end
 
 	-- This is *very* important. The downloaded files have labels 0-9, which do
-   -- not work with CrossEntropyCriterion
+	-- not work with CrossEntropyCriterion
 	labels:add(1)
 
 	return {

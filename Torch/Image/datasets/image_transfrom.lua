@@ -18,9 +18,9 @@ end
 
 function M.ColorNormalize( meanstd, config )
 	local colorspace = config.opt.colorspace or 'rgb'
-	local yuvkernel = config.opt.yuvkernel or nil
-	local data_aug = config.opt.data_aug or 0
-	if data_aug == 1 then
+	local yuvkernel = config.yuvkernel or nil
+	local dataAug = config.opt.dataAug or 0
+	if dataAug == 1 then
 		return function(img)
 			img = img:clone()
 			if colorspace == 'rgb' then

@@ -7,11 +7,14 @@ This is torch7 code for my nn learning.
 Here are some greate code sources:
 
 > [torch-rnn by jcjohnson](https://github.com/jcjohnson/torch-rnn)
+>
 > [torch-resnet by facebook](https://github.com/facebook/fb.resnet.torch)
+>
 > [torch-toolbox by e-lab](https://github.com/e-lab/torch-toolbox)
+>
 > [trainplot by joeyhng](https://github.com/joeyhng/trainplot)
 
-## MNIST
+## Mnist
 
 Basic torch code for classifying MNIST dataset using LeNet. The code organization follows [torch-rnn by jcjohnson](https://github.com/jcjohnson/torch-rnn)
 
@@ -36,5 +39,7 @@ Basic torch code for different datasets using different model types. The code or
 
 **NOTE**:
 	1. still working on imagenet, resnet, preresnet.
+
 	2. dataloader is single thread version - working on multithread version
+
 	3. please read the options when running

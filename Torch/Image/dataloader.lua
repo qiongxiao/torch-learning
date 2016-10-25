@@ -33,7 +33,7 @@ function DataLoader:__init(dataset, opt, split)
 	require('datasets/' .. opt.dataset)
 	self.nCrops = (split == 'val' and opt.tenCrop) and 10 or 1
 	self.__size = dataset:size()
-	self.batchSize = math.floor(opt.batchSize / self.nCrops)
+	self.batchsize = math.floor(opt.batchsize / self.nCrops)
 	self.split = split
 	self.opt = opt
 	self.dataset = dataset
@@ -41,11 +41,11 @@ function DataLoader:__init(dataset, opt, split)
 end
 
 function DataLoader:size()
-   return math.ceil(self.__size / self.batchSize)
+   return math.ceil(self.__size / self.batchsize)
 end
 
 function DataLoader:run()
-	local size, batchSize = self.__size, self.batchSize
+	local size, batchsize = self.__size, self.batchsize
 	-- randomize the order of data
 	local perm = torch.randperm(size)
 	
@@ -53,7 +53,7 @@ function DataLoader:run()
 	local function makebatches(idx)
 		if idx <= size then
 			-- choose indices inside batch
-			local indices = perm:narrow(1, idx, math.min(batchSize, size - idx + 1))
+			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1))
 			if self.opt.dataAug == 0 then
 				local sample = self.dataset:get({indices:totable()})
 				local input = self.preprocess(sample.input)
@@ -83,7 +83,7 @@ function DataLoader:run()
 					target = target,
 				}
 			end
-			idx = idx + batchSize
+			idx = idx + batchsize
 		else
 			return nil
 		end

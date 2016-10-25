@@ -21,9 +21,8 @@ function M.parse(arg)
 	cmd:text('Options:')
 	------------- General options ---------------------
 	cmd:option('-data',			'',			'Path to dataset')
-	cmd:option('-dataset',		'cifar10',	'Options: imagenet | cifar10 | cifar100')
+	cmd:option('-dataset',		'cifar10',	'Options: imagenet | cifar10 | cifar100 | MNIST')
 	cmd:option('-nGPU',			1,			'Number of GPUs to use by default')
-	cmd:option('-backend',		'cudnn',	'Options: cudnn | cunn')
 	cmd:option('-gen',			'gen',		'Path to save generated files')
 	------------- Data options ------------------------
 	cmd:option('-dataAug',		0,			'whether augment data')
@@ -31,7 +30,7 @@ function M.parse(arg)
 	------------- Training options --------------------
 	cmd:option('-maxEpochs',	0,			'Number of total epochs to run')
 	cmd:option('-startEpoch',	1,			'Manual epoch number (useful on restarts)')
-	cmd:option('-batchSize',	32,			'mini-batch size (1 = pure stochastic)')
+	cmd:option('-batchsize',	32,			'mini-batch size (1 = pure stochastic)')
 	cmd:option('-testOnly',		'false',	'Run on validation set only')
 	cmd:option('-tenCrop',		'false',	'Ten-crop testing')
 	------------- Checkpoint options ------------------
@@ -46,6 +45,8 @@ function M.parse(arg)
 	cmd:option('-lr_decay',		0,			'learning rate decay')
 	cmd:option('-weightDecay',	1e-4,		'weight decay')
 	cmd:option('-momentum',		0.9,		'momentum, for sgd')
+	cmd:option('-decay_every',	25,			'external learning rate decay')
+	cmd:option('-decay_factor',	0.5,		'external learning rate decay factor')
 	------------- Model options -----------------------
 	cmd:option('-netType',      'resnet', 'Options: resnet | preresnet | VGG | LeNet | SmallCNNet')
 	cmd:option('-depth',        34,       'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')

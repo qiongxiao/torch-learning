@@ -65,7 +65,7 @@ function Trainer:train(epoch, dataloader, plotter)
 		self:copyInputs(sample)
 
 		local output = self.model:forward(self.input):float()
-		local batchSize = output:size(1)
+		local batchsize = output:size(1)
 		local loss = self.criterion:forward(self.model.output, self.target)
 
 		self.model:zeroGradParameters()
@@ -75,10 +75,10 @@ function Trainer:train(epoch, dataloader, plotter)
 		optim.sgd(feval, self.params, self.optimState)
 
 		local top1, top5 = self:computeScore(output, sample.target, 1)
-		top1Sum = top1Sum + top1*batchSize
-		top5Sum = top5Sum + top5*batchSize
-		lossSum = lossSum + loss*batchSize
-		N = N + batchSize
+		top1Sum = top1Sum + top1*batchsize
+		top5Sum = top5Sum + top5*batchsize
+		lossSum = lossSum + loss*batchsize
+		N = N + batchsize
 
 		print((' | Epoch: [%d][%d/%d]    Time %.3f  Data %.3f  Err %1.4f  top1 %7.3f  top5 %7.3f'):format(
 			epoch, n, trainSize, timer:time().real, dataTime, loss, top1, top5))
@@ -114,14 +114,14 @@ function Trainer:test(epoch, dataloader)
 		self:copyInputs(sample)
 
 		local output = self.model:forward(self.input):float()
-		local batchSize = output:size(1) / nCrops
+		local batchsize = output:size(1) / nCrops
 		local loss = self.criterion:forward(self.model.output, self.target)
 
 		local top1, top5 = self:computeScore(output, sample.target, nCrops)
-		top1Sum = top1Sum + top1*batchSize
-		top5Sum = top5Sum + top5*batchSize
-		lossSum = lossSum + loss*batchSize
-		N = N + batchSize
+		top1Sum = top1Sum + top1*batchsize
+		top5Sum = top5Sum + top5*batchsize
+		lossSum = lossSum + loss*batchsize
+		N = N + batchsize
 
 		print((' | Test: [%d][%d/%d]    Time %.3f  Data %.3f  top1 %7.3f (%7.3f)  top5 %7.3f (%7.3f)'):format(
 			epoch, n, size, timer:time().real, dataTime, top1, top1Sum / N, top5, top5Sum / N))
@@ -146,20 +146,20 @@ function Trainer:computeScore(output, target, nCrops)
    end
 
 	-- Computes the top1 and top5 error rate
-	local batchSize = output:size(1)
+	local batchsize = output:size(1)
 
 	local _ , predictions = output:float():sort(2, true) -- descending (predictions is matrix of indices)
 
 	-- Find which predictions match the target
 	local correct = predictions:eq(
-		target:long():view(batchSize, 1):expandAs(output))
+		target:long():view(batchsize, 1):expandAs(output))
 
 	-- Top-1 score
-	local top1 = 1.0 - (correct:narrow(2, 1, 1):sum() / batchSize)
+	local top1 = 1.0 - (correct:narrow(2, 1, 1):sum() / batchsize)
 
 	-- Top-5 score, if there are at least 5 classes
 	local len = math.min(5, correct:size(2))
-	local top5 = 1.0 - (correct:narrow(2, 1, len):sum() / batchSize)
+	local top5 = 1.0 - (correct:narrow(2, 1, len):sum() / batchsize)
 
 	return top1 * 100, top5 * 100
 end

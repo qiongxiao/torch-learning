@@ -35,6 +35,7 @@ function M.parse(arg)
 	------------- Checkpoint options ------------------
 	cmd:option('-save',			'checkpoints',	'Directory in which to save checkpoints')
 	cmd:option('-resume',		'none',			'Resume from the latest checkpoint in this directory')
+	cmd:option('-checkEvery',	1,				'checkpoint every epcoh #')
 	------------- Plotting options --------------------
 	cmd:option('-plotPath',		'plot/out',		'Path to output plot file (excluding .json)')
 	cmd:option('-plotEvery',	0,				'Whether to plot every iteration')

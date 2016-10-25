@@ -14,6 +14,8 @@ require 'optim'
 require 'nn'
 require 'cutorch'
 require 'cunn'
+require 'cudnn'
+
 local DataLoader = require 'dataloader'
 local models = require 'models/init'
 local Trainer = require 'trainer'
@@ -50,11 +52,7 @@ local bestTop5 = math.huge
 for epoch = startEpoch, opt.maxEpochs do
 	-- Train for a single epoch
 	local trainTop1, trainTop5, trainLoss
-	if opt.plotEvery == 1 then
-		trainTop1, trainTop5, trainLoss = trainer:train(epoch, trainLoader, plotter)
-	else
-		trainTop1, trainTop5, trainLoss = trainer:train(epoch, trainLoader)
-	end
+	trainTop1, trainTop5, trainLoss = trainer:train(epoch, trainLoader, plotter)
 
 	-- Run model on validation set
 	local testTop1, testTop5, testLoss = trainer:test(epoch, valLoader)
@@ -67,7 +65,7 @@ for epoch = startEpoch, opt.maxEpochs do
 		print('<Training> * Best model ', testTop1, testTop5)
 	end
 	
-	if epoch % opt.checkEvery == 0 then
+	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
 		checkpoints.save(epoch, model, trainer.optimConfig, bestModel, opt)
 		plotter:checkpoint()
 	end

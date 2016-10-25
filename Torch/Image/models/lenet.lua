@@ -8,33 +8,38 @@ local Max = nn.SpatialMaxPooling
 local function createModel(opt)
 	local function SRM(nInputPlane, nOutputPlane)
 		return nn.Sequential():add(Convolution(nInputPlane, nOutputPlane, 5, 5))
-			:add(ReLU)
+			:add(ReLU(True))
 			:add(Max(2, 2, 2, 2, 0, 0))
 	end
 
 	local model = nn.Sequential()
 
-	model:add(SRM(32, 64))
-	model:add(SRM(64, 64))
-	local size, nClasses
+	local size, nClasses, iChanel
 	if opt.dataset == 'imagenet' then
+		iChanel = 3
 		size = 53 -- ((224 - 4) / 2 - 4) / 2
 		nClasses = 1000
 	elseif opt.dataset == 'cifar10' or opt.dataset == 'cifar100' then
+		iChanel = 3
 		size = 5 -- ((32 - 4) / 2 - 4) / 2
 		nClasses = (opt.dataset == 'cifar10') and 10 or 100
 	elseif opt.dataset == 'mnist' then
+		iChanel = 1
 		size = 4 -- ((28 - 4) / 2 - 4) / 2
 		nClasses = 10
 	else
 		error('invalid dataset ' .. opt.dataset)
 	end
-	model:add(nn.Reshape(64 * size * size))
-	model:add(nn.Dropout(opt.dropout))
-	model:add(nn.Linear(64 * size * size, 1024))
-	model:add(ReLU())
-	model:add(nn.Linear(1024, nClasses))
 
+	model:add(SRM(iChanel, 32))
+	model:add(SRM(32, 64))
+	model:add(nn.Reshape(64 * size * size))
+	if opt.dropout > 0 then
+		model:add(nn.Dropout(opt.dropout))
+	end
+	model:add(nn.Linear(64 * size * size, 1024))
+	model:add(nn.ReLU())
+	model:add(nn.Linear(1024, nClasses))
 	local function ConvInit(name)
 		for k, v in pairs(model:findModules(name)) do
 			local n = v.kW * v.kH * v.nOutputPlane
@@ -49,9 +54,8 @@ local function createModel(opt)
 	end
 
 	ConvInit('cudnn.SpatialConvolution')
-	ConvInit('nn.SpatialConvolution')
 
-	for k,v in pairs(model:findModules('nn.Linear')) do
+	for k, v in pairs(model:findModules('nn.Linear')) do
 		v.bias:zero()
 	end
 
@@ -63,7 +67,7 @@ local function createModel(opt)
 		end)
 	end
 
-	model:get(1).gradInput = nil
+	--model:get(1).gradInput = nil
 
 	return model
 end

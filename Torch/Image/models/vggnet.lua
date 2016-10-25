@@ -29,7 +29,7 @@ local function createModel(opt)
 
 	local model = nn.Sequential()
 
-	model:add(ConvBNReLU(iChanel, 64))
+	model:add(ConvBNReLU(3, 64))
 	if opt.conv_dropout > 0 then
 		model:add(nn.Dropout(opt.convDropout))
 	end
@@ -115,9 +115,9 @@ local function createModel(opt)
 
 	ConvInit('cudnn.SpatialConvolution')
 	ConvInit('nn.SpatialConvolution')
-	BNInit('fbnn.SpatialBatchNormalization')
 	BNInit('cudnn.SpatialBatchNormalization')
 	BNInit('nn.SpatialBatchNormalization')
+
 	for k,v in pairs(model:findModules('nn.Linear')) do
 		v.bias:zero()
 	end

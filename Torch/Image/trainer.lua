@@ -11,6 +11,7 @@
 --
 --]]
 require 'torch'
+require 'cutorch'
 require 'nn'
 local optim = require 'optim'
 
@@ -19,7 +20,7 @@ local Trainer = torch.class('cnn.Trainer', M)
 
 function Trainer:__init(model, criterion, opt, optimConfig)
 	self.model = model
-	self.crit = criterion
+	self.criterion = criterion
 	self.optimizer = opt.optimizer
 	if self.optimizer == 'sgd' then
 		self.optimConfig = {
@@ -91,7 +92,7 @@ function Trainer:train(epoch, dataloader, plotter)
 
 		timer:reset()
 		dataTimer:reset()
-		if not plotter then
+		if self.opt.plotEvery == 1 then
 			plotter:add('Train Loss / Iteration', 'Train', (epoch-1)*trainSize+n, loss)
 		end
 	end

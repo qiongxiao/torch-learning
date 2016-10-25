@@ -60,15 +60,16 @@ function DataLoader:run()
 	-- randomize the order of data
 	local perm = torch.randperm(size)
 	
-	local idx, sample = 1, nil
+	local sample = nil
 	local function makebatches(idx)
 		if idx <= size then
 			-- choose indices inside batch
-			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1))
+			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1)):long()
 			if self.opt.dataAug == 0 then
-				local sample = self.dataset:get({indices:totable()})
+				local sample = self.dataset:getbatch(indices)
 				local input = self.preprocess(sample.input)
 				collectgarbage()
+				idx = idx + batchsize
 				return {
 					input = input,
 					target = sample.target
@@ -89,12 +90,12 @@ function DataLoader:run()
 					target[i] = sample.target
 				end
 				collectgarbage()
+				idx = idx + batchsize
 				return {
 					input = batch:view(sz * nCrops, table.unpack(imageSize)),
 					target = target,
 				}
 			end
-			idx = idx + batchsize
 		else
 			return nil
 		end
@@ -102,8 +103,8 @@ function DataLoader:run()
 
 	local n = 0
 	local function loop()
-		sample = makebatches(idx)
-		if sample then
+		sample = makebatches(n * batchsize + 1)
+		if not sample then
 			return nil
 		end
 		n = n + 1

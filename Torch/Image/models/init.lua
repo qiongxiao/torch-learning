@@ -84,7 +84,7 @@ function M.setup(opt, checkpoint)
 		dpt.gradInput = nil
 
 		model = dpt:cuda()
-   end
+	end
 
 	local criterion = nn.CrossEntropyCriterion():cuda()
 	return model, criterion

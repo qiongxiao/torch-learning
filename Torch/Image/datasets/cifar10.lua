@@ -35,6 +35,16 @@ function CifarDataset:get(i)
 	}
 end
 
+function CifarDataset:getbatch( i )
+	local image = self.imageInfo.data:index(1, i):float()
+	local label = self.imageInfo.labels:index(1, i)
+
+	return {
+		input = image,
+		target = label,
+	}
+end
+
 function CifarDataset:size()
 	return self.imageInfo.data:size(1)
 end

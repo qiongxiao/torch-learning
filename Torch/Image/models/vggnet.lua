@@ -80,7 +80,7 @@ local function createModel(opt)
 	model:add(ConvBNReLU(512, 512))
 	model:add(Max(2, 2, 2, 2, 0, 0):ceil())
 
-	model:add(nn.View(512 * size))
+	model:add(nn.View(512 * size * size))
 
 	if opt.dropout > 0 then
 		model:add(nn.Dropout(opt.dropout))

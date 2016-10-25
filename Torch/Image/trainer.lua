@@ -28,7 +28,7 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 			learningRateDecay = opt.lr_decay,
 			weigthDecay = opt.weigthDecay,
 			momentum = opt.momentum,
-			nesterov = True,
+			nesterov = true,
 			dampening = 0.0
 		}
 	elseif self.optimizer == 'adam' then

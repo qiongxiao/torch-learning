@@ -30,14 +30,15 @@ Basic torch code for classifying Cifar10 dataset using VGGnet. The code organiza
 
 Basic torch code for different datasets using different model types. The code organization follows (some codes are copied from) [torch-resnet by facebook](https://github.com/facebook/fb.resnet.torch)
 
-| Dataset		| Model							|
-| ------------- |:-------------:				|
-| mnist			| lenet							|
-| cifar10		| vggnet, resnet, preresnet		|
-| cifar100		| vggnet, resnet				|
-| (imagenet)	| vggnet, resnet				|
+| Dataset		| Model									|
+| ------------- |:-------------:						|
+| mnist			| lenet									|
+| cifar10		| lenet, vggnet, resnet, preresnet		|
+| cifar100		| lenet, vggnet, resnet, preresnet		|
+| (imagenet)	| lenet, vggnet, resnet, preresnet		|
 
 **NOTE**:
+
 	1. still working on imagenet, resnet, preresnet.
 
 	2. dataloader is single thread version - working on multithread version

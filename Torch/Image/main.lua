@@ -41,8 +41,13 @@ local trainLoader, valLoader, testLoader = DataLoader.create(opt)
 local trainer = Trainer(model, criterion, opt, optimState)
 
 if opt.testOnly then
-	local top1Err, top5Err = trainer:test(0, valLoader)
-	print(string.format(' * Results top1: %6.3f  top5: %6.3f', top1Err, top5Err))
+	if opt.dataset == 'MNIST' then
+		local testTop1, testTop5, _ = trainer:test(0, testLoader)
+		print(string.format('<Testing> * Results top1: %6.3f  top5: %6.3f', testTop1, testTop5))
+	else
+		local top1Err, top5Err = trainer:test(0, valLoader)
+		print(string.format('<Testing> * Results top1: %6.3f  top5: %6.3f', top1Err, top5Err))
+	end
 	return
 end
 
@@ -66,7 +71,7 @@ for epoch = startEpoch, opt.maxEpochs do
 	end
 	
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
-		checkpoints.save(epoch, model, trainer.optimConfig, bestModel, opt)
+		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, opt)
 		plotter:checkpoint()
 	end
 	
@@ -76,9 +81,9 @@ for epoch = startEpoch, opt.maxEpochs do
 	plotter:add('Loss', 'Validation', epoch, testLoss)
 end
 
-print(string.format('<Training> * Finished top1: %6.3f  top5: %6.3f', bestTop1, bestTop5))
-
 if opt.dataset == 'MNIST' then
-	local testTop1, testTop5, _ = trainer:test(epoch, testLoader)
+	local testTop1, testTop5, _ = trainer:test(0, testLoader)
 	print(string.format('<Testing> * Finished top1: %6.3f  top5: %6.3f', testTop1, testTop5))
+else
+	print(string.format('<Testing> * Finished top1: %6.3f  top5: %6.3f', bestTop1, bestTop5))
 end

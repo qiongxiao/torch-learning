@@ -1,8 +1,8 @@
-# Torch - LeNet
+# Torch - Mnist - LeNet
 
 ## Introduction
 
-Basic torch code for classifying MNIST dataset. The accuracy rate can be up to 99.20% after 10 epochs.
+Basic torch code for classifying mnist dataset. The accuracy rate can be up to 99.20% after 10 epochs.
 
 LeNet Construction shows as follows,
 
@@ -28,7 +28,9 @@ You can change the batchsize and max_epoches like this
 
 > th train.lua -batch_size 100 -max_epoches 20
 
-### Step 3: Test the model
+You can observe training situation by open plot/showplot.html?path=out.json
+
+### Step 2: Test the model
 
 Run like this
 

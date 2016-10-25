@@ -37,7 +37,7 @@ function checkpoint.loadLatestInfo(opt)
 
 	local latestPath = paths.concat(opt.resume, 'latest_info.t7')
 	if not paths.filep(latestPath) then
-		return nil
+		error('<resuming> checkpoint' .. latestPath .. 'does not exist')
 	end
 
 	print('<resuming> Loading checkpoint ' .. latestPath)

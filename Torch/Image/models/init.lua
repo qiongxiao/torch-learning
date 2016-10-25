@@ -1,3 +1,4 @@
+--[[code from https://github.com/facebook/fb.resnet.torch/blob/master/models/init.lua
 --
 --  Copyright (c) 2016, Facebook, Inc.
 --  All rights reserved.
@@ -9,7 +10,7 @@
 --  Generic model creating code. For the specific ResNet model see
 --  models/resnet.lua
 --
-
+--]]
 require 'nn'
 require 'cunn'
 require 'cudnn'

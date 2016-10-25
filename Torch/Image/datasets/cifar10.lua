@@ -1,12 +1,14 @@
 --[[ code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/cifar10.lua
-
-ARGS:
-
-- 'imageInfo' : dataset, ={ train={data=, labels=}, val={data=, labels=}}
-- 'config' : a table with configuration parameters for the Dataset
-- 'config.opt'
-- 'config.split'
-- 'config.yuvkernel'
+--
+--  Copyright (c) 2016, Facebook, Inc.
+--  All rights reserved.
+--
+--  This source code is licensed under the BSD-style license found in the
+--  LICENSE file in the root directory of this source tree. An additional grant
+--  of patent rights can be found in the PATENTS file in the same directory.
+--
+--  CIFAR-10 dataset loader
+--
 --]]
 local t = require 'datasets/image_transform'
 

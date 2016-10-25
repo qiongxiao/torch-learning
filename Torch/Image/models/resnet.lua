@@ -1,3 +1,4 @@
+--[[code from https://github.com/facebook/fb.resnet.torch/blob/master/models/resnet.lua
 --
 --  Copyright (c) 2016, Facebook, Inc.
 --  All rights reserved.
@@ -8,6 +9,7 @@
 --
 --  The ResNet model definition
 --
+--]]
 
 local nn = require 'nn'
 require 'cunn'

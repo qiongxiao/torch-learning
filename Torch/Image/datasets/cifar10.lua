@@ -50,7 +50,7 @@ local meanstd = {
 
 function CifarDataset:preprocess()
 	if self.split == 'train' then
-		if self.config.opt.data_aug == 0 then
+		if self.config.opt.dataAug == 0 then
 			return t.ColorNormalize(meanstd, self.config)
 		else
 			return t.Compose{

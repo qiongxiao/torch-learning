@@ -2,11 +2,11 @@
 
 ## Introduction
 
-Basic Torch code for classifying MNIST dataset. The accuracy rate can be up to 99.20% after 10 epochs.
+Basic torch code for classifying MNIST dataset. The accuracy rate can be up to 99.20% after 10 epochs.
 
 LeNet Construction shows as follows,
 
-> CONV[32, 5, 5] -> ReLU -> POOL[2, 2] -> CONV[64, 5, 5] -> ReLU -> POOL[2, 2] -> Dropout -> FC[,1024] -> ReLU -> FC[1024, 10] - (-> using softmax)
+> Conv[32, 5, 5] -> ReLU -> POOL[2, 2] -> Conv[64, 5, 5] -> ReLU -> POOL[2, 2] -> Dropout -> FC[,1024] -> ReLU -> FC[1024, 10] - (-> using softmax)
 
 Code style and organization follow [torch-rnn by jcjohnson](https://github.com/jcjohnson/torch-rnn). Therefore, some codes in train.lua are copied and edited from [torch-rnn by jcjohnson](https://github.com/jcjohnson/torch-rnn).
 

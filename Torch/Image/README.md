@@ -41,10 +41,10 @@ Run like this
 
 This will load the trained checkpoint checkpoints/model_best.t7 from the previous step, test the mnist data from it.
 
-**NOTE**:
+##NOTE:
 
-	1. still working on imagenet, resnet, preresnet.
+1. still working on imagenet, resnet, preresnet.
 
-	2. dataloader is single thread version - working on multithread version
+2. dataloader is single thread version - working on multithread version
 
-	3. please read the options when running
+3. please read the options when running

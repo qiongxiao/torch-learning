@@ -40,7 +40,7 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 	self.params, self.gradParams = model:getParameters()
 end
 
-function Trainer:train(epoch, dataloader)
+function Trainer:train(epoch, dataloader, plotter)
 	-- Trains the model for a single epoch
 	self.optimState.learningRate = self:learningRate(epoch)
 
@@ -88,6 +88,9 @@ function Trainer:train(epoch, dataloader)
 
 		timer:reset()
 		dataTimer:reset()
+		if not plotter then
+			plotter:add('Train Loss / Iteration', 'Train', (epoch-1)*trainSize+n, loss)
+		end
 	end
 	return top1Sum / N, top5Sum / N, lossSum / N
 end
@@ -100,7 +103,7 @@ function Trainer:test(epoch, dataloader)
 	local size = dataloader:size()
 
 	local nCrops = self.opt.tenCrop and 10 or 1
-	local top1Sum, top5Sum = 0.0, 0.0
+	local top1Sum, top5Sum, lossSum = 0.0, 0.0, 0.0
 	local N = 0
 
 	self.model:evaluate()
@@ -117,6 +120,7 @@ function Trainer:test(epoch, dataloader)
 		local top1, top5 = self:computeScore(output, sample.target, nCrops)
 		top1Sum = top1Sum + top1*batchSize
 		top5Sum = top5Sum + top5*batchSize
+		lossSum = lossSum + loss*batchSize
 		N = N + batchSize
 
 		print((' | Test: [%d][%d/%d]    Time %.3f  Data %.3f  top1 %7.3f (%7.3f)  top5 %7.3f (%7.3f)'):format(
@@ -130,7 +134,7 @@ function Trainer:test(epoch, dataloader)
 	print((' * Finished epoch # %d     top1: %7.3f  top5: %7.3f\n'):format(
 		epoch, top1Sum / N, top5Sum / N))
 
-	return top1Sum / N, top5Sum / N
+	return top1Sum / N, top5Sum / N, lossSum / N
 end
 
 function Trainer:computeScore(output, target, nCrops)

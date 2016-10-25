@@ -33,7 +33,7 @@ local plotter = Plotter(opt)
 local model, criterion = models.setup(opt, checkpoint)
 
 -- Data loading
-local trainLoader, valLoader = DataLoader.create(opt)
+local trainLoader, valLoader, testLoader = DataLoader.create(opt)
 
 -- The trainer handles the training loop and evaluation on validation set
 local trainer = Trainer(model, criterion, opt, optimState)
@@ -64,7 +64,7 @@ for epoch = startEpoch, opt.maxEpochs do
 		bestModel = true
 		bestTop1 = testTop1
 		bestTop5 = testTop5
-		print(' * Best model ', testTop1, testTop5)
+		print('<Training> * Best model ', testTop1, testTop5)
 	end
 	
 	if epoch % opt.checkEvery == 0 then
@@ -78,4 +78,9 @@ for epoch = startEpoch, opt.maxEpochs do
 	plotter:add('Loss', 'Validation', epoch, testLoss)
 end
 
-print(string.format(' * Finished top1: %6.3f  top5: %6.3f', bestTop1, bestTop5))
+print(string.format('<Training> * Finished top1: %6.3f  top5: %6.3f', bestTop1, bestTop5))
+
+if opt.dataset == 'MNIST' then
+	local testTop1, testTop5, _ = trainer:test(epoch, testLoader)
+	print(string.format('<Testing> * Finished top1: %6.3f  top5: %6.3f', testTop1, testTop5))
+end

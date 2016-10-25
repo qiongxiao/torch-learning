@@ -10,22 +10,33 @@ local DataLoader = torch.class('cnn.DataLoader', M)
 function DataLoader.create(opt)
 	-- The train and val loader
 	local loaders = {}
-	local yuvkernel = nil
-	if opt.colorspace == 'yuv' then
-		require 'torch'
-		require 'nn'
-		yuvkernel = nn.SpatialContrastiveNormalization(1, image.gaussian1D(7))
-	end
-	for i, split in ipairs{'train', 'val'} do
-		local config = {
-			opt = opt,
-			split = split,
-			yuvkernel = yuvkernel
-		}
-		local dataset = datasets.create(config)
-		loaders[i] = M.DataLoader(dataset, opt, split)
-	end
 
+	if opt.dataset == 'MNIST' then
+		for i, split in ipairs{'train', 'val', 'test'} do
+			local config = {
+				opt = opt,
+				split = split,
+			}
+			local dataset = datasets.create(config)
+			loaders[i] = M.DataLoader(dataset, opt, split)
+		end
+	else
+		local yuvkernel = nil
+		if opt.colorspace == 'yuv' then
+			require 'torch'
+			require 'nn'
+			yuvkernel = nn.SpatialContrastiveNormalization(1, image.gaussian1D(7))
+		end
+		for i, split in ipairs{'train', 'val'} do
+			local config = {
+				opt = opt,
+				split = split,
+				yuvkernel = yuvkernel
+			}
+			local dataset = datasets.create(config)
+			loaders[i] = M.DataLoader(dataset, opt, split)
+		end
+	end
 	return table.unpack(loaders)
 end
 

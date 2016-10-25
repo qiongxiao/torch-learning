@@ -26,7 +26,7 @@ function M.create(config)
 	if not paths.filep(cachePath) or not isvalid(config.opt, cachePath) then
 		paths.mkdir('gen')
 
-		local script = paths.dofile(config.opt.dataset .. '-gen.lua')
+		local script = paths.dofile(config.opt.dataset .. '_gen.lua')
 		script.exec(config.opt, cachePath)
 	end
 	local imageInfo = torch.load(cachePath)

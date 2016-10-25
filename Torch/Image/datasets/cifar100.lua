@@ -41,8 +41,8 @@ end
 -- Computed from entire CIFAR-10 training set
 local meanstd = {
 	rgb = {
-		mean = {125.3, 123.0, 113.9},
-		std  = {63.0,  62.1,  66.7},
+		mean = {129.3, 124.1, 112.4},
+		std  = {68.2,  65.4,  70.4},
 	}
 	yuv = {
 		mean = {},

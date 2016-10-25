@@ -4,20 +4,25 @@
 
 Basic Torch code for classifying cifar10 dataset. The accuracy rate can be up to 89% after 50 epochs.
 
-VGGnet Construction shows as follows,
+## VGGnet
 
+Here are some layer definitions:
+
+1. 
 > define Conv [nInputPlane, nOutputPlane, kernelHeight, kernelWidth, hStride, wStride, hPadding, wPadding]
->
+
+2.
 > define ConvBNReLU[nInputPlane, nOutputPlane] as follows,
 >
 > Conv[nInputPlane, nOutputPlane, 3, 3, 1, 1, 1, 1] --> SpatialBatchNorm[nOutputPlane] --> ReLU()
->
+
+3.
 > define SpatialMaxPooling [kernelHeight, kernelWidth, hStride, wStride, hPadding, wPadding]
 >
 > define MaxPooling as SpatialMaxPooling[2, 2, 2, 2, 0, 0]
->
-> VGGnet Construction
->
+
+VGGnet Construction shows as follows,
+
 > ConvBNReLU[3, 64] --> Dropout --> ConvBNReLU[64, 64] --> MaxPooling -->
 > ConvBNReLU[64, 128] --> Dropout --> ConvBNReLU[128, 128] --> MaxPooling -->
 > ConvBNReLU[128, 256] --> Dropout --> ConvBNReLU[256, 256] --> Dropout --> ConvBNReLU[256, 256] --> MaxPooling -->

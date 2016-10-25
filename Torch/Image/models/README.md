@@ -29,15 +29,18 @@ Basic torch code for different datasets using different model types.
 
 Here are some layer definitions:
 
+1. 
 > define Conv [nInputPlane, nOutputPlane, kernelHeight, kernelWidth, hStride, wStride, hPadding, wPadding]
 >
 > default Conv [nInputPlane, nOutputPlane, kernelHeight, kernelWidth, 1, 1, 0, 0]
 
+2. 
 > define SpatialMaxPooling [kernelHeight, kernelWidth, hStride, wStride, hPadding, wPadding]
 >
 > define maxPool as SpatialMaxPooling[2, 2, 2, 2, 0, 0]
 
-> define define ConvBNReLU[nInputPlane, nOutputPlane]
+3. 
+> define ConvBNReLU[nInputPlane, nOutputPlane]
 >
 > Conv[nInputPlane, nOutputPlane, 3, 3, 1, 1, 1, 1] --> SpatialBatchNorm[nOutputPlane] --> ReLU()
 
@@ -59,6 +62,7 @@ LeNet Construction shows as follows,
 >
 > imagenet : oSize = 224/(2^5) = 7
 
+new layer definition:
 > define ConvBNReLU[nInputPlane, nOutputPlane] as follows,
 >
 > Conv[nInputPlane, nOutputPlane, 3, 3, 1, 1, 1, 1] --> SpatialBatchNorm[nOutputPlane] --> ReLU()

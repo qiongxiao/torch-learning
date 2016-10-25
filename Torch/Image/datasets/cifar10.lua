@@ -1,16 +1,25 @@
--- code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/cifar10.lua
+--[[ code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/cifar10.lua
+
+ARGS:
+
+- 'imageInfo' : dataset, ={ train={data=, labels=}, val={data=, labels=}}
+- 'config' : a table with configuration parameters for the Dataset
+- 'config.opt'
+- 'config.split'
+- 'config.yuvkernel'
+--]]
 local t = require 'datasets/image_transform'
 
 local M = {}
 
 local CifarDataset = torch.class('CifarDataset', M)
 
-function CifarDataset:__init( imageInfo, opt, split )
+function CifarDataset:__init( imageInfo, config )
+	local split = config.split or nil
 	assert(imageInfo[split], split)
 	self.imageInfo = imageInfo[split]
 	self.split = split
-	self.opt = opt
-	self.colorspace = opt.colorspace
+	self.config = config
 end
 
 function CifarDataset:get(i)
@@ -39,23 +48,19 @@ local meanstd = {
 	}
 }
 
-function CifarDataset:preprocess_simple()
-	if self.split == 'train' or self.split == 'test' or self.split == 'val' then
-		return t.ColorNormalize(meanstd, self.colorspace)
-	else
-		error('invalid split: ' .. self.split)
-	end
-end
-
-function CifarDataset:preprocess_augment()
+function CifarDataset:preprocess()
 	if self.split == 'train' then
-	return t.Compose{
-		t.ColorNormalize(meanstd, self.colorspace),
-		t.HorizontalFlip(0.5),
-		t.RandomCrop(32, 4),
-	}
-	elseif self.split == 'test' or self.split == 'val' then
-		return t.ColorNormalize(meanstd, self.colorspace)
+		if self.config.opt.data_aug == 0 then
+			return t.ColorNormalize(meanstd, self.config)
+		else
+			return t.Compose{
+				t.ColorNormalize(meanstd, self.config),
+				t.HorizontalFlip(0.5),
+				t.RandomCrop(32, 4),
+			}
+		end
+	elseif self.split == 'val' then
+		return t.ColorNormalize(meanstd, self.config)
 	else
 		error('invalid split: ' .. self.split)
 	end

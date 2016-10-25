@@ -1,10 +1,11 @@
 -- code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua
 
 -- image transforms for input data normalization
+require 'torch'
 require 'image'
+require 'nn'
 
 local M = {}
-M.yuv_normalization = nn.SpatialContrastiveNormalization(1, image.gaussian1D(7))
 
 function  M.Compose( transforms )
 	return function(input)
@@ -15,26 +16,56 @@ function  M.Compose( transforms )
 	end
 end
 
-function M.ColorNormalize( meanstd, colorspace )
-	return function(img)
-		img = img:clone()
-		if colorspace == 'rgb' then
-			local c = img:size(1)
-			for i = 1, c do
-				img[i]:add(-meanstd.mean[i])
-				img[i]:div(meanstd.std[i])
+function M.ColorNormalize( meanstd, config )
+	local colorspace = config.opt.colorspace or 'rgb'
+	local yuvkernel = config.opt.yuvkernel or nil
+	local data_aug = config.opt.data_aug or 0
+	if data_aug == 1 then
+		return function(img)
+			img = img:clone()
+			if colorspace == 'rgb' then
+				local c = img:size(1)
+				for i = 1, c do
+					img[i]:add(-meanstd.mean[i])
+					img[i]:div(meanstd.std[i])
+				end
+			elseif colorspace == 'yuv' then
+				assert(yuvkernel, 'invalid yuv kernel')
+				local yuv = image.rgb2yuv(img)
+				img[1] = yuvkernel(yuv[{{1}}])
+				img[2]:add(-meanstd.mean[2])
+				img[2]:div(meanstd.std[2])
+				img[3]:add(-meanstd.mean[3])
+				img[3]:div(meanstd.std[3])
+			else
+				error('invalid colorspace: ' .. config.colorspace)
 			end
-		elseif colorspace == 'yuv' then
-			local yuv = image.rgb2yuv(img)
-			img[1] = M.yuv_normalization(yuv[{{1}}])
-			img[2]:add(-meanstd.mean[2])
-			img[2]:div(meanstd.std[2])
-			img[3]:add(-meanstd.mean[3])
-			img[3]:div(meanstd.std[3])
-		else
-			error('invalid colorspace: ' .. colorspace)
+			return img
 		end
-		return img
+	else
+		return function(imgs)
+			imgs = imgs:clone()
+			if colorspace == 'rgb' then
+				local c = imgs:size(2)
+				for i = 1, c do
+					imgs:select(2, i):add(-meanstd.mean[i])
+					imgs:select(2, i):div(meanstd.std[i])
+				end
+			elseif colorspace == 'yuv' then
+				assert(yuvkernel, 'invalid yuv kernel')
+				local num_imgs = imgs:size(1)
+				for i = 1, num_imgs do
+					local yuv = image.rgb2yuv(imgs[i])
+					imgs[i][1] = yuvkernel(yuv[{{1}}])
+					imgs[i][2]:add(-meanstd.mean[2])
+					imgs[i][2]:div(meanstd.std[2])
+					imgs[i][3]:add(-meanstd.mean[3])
+					imgs[i][3]:div(meanstd.std[3])
+			else
+				error('invalid colorspace: ' .. config.colorspace)
+			end
+			return imgs
+		end
 	end
 end
 

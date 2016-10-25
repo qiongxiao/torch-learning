@@ -40,13 +40,15 @@ function M.parse(arg)
 	cmd:option('-plotPath',		'plot/out',		'Path to output plot file (excluding .json)')
 	cmd:option('-plotEvery',	0,				'Whether to plot every iteration')
 	------------- Optimization options ----------------
-	cmd:option('-optimizer',	'adam',		'optimizer algorithm: adam | sgd')
-	cmd:option('-lr',			0.1,		'initial learning rate')
-	cmd:option('-lr_decay',		0,			'learning rate decay')
-	cmd:option('-weightDecay',	1e-4,		'weight decay')
-	cmd:option('-momentum',		0.9,		'momentum, for sgd')
-	cmd:option('-decay_every',	25,			'external learning rate decay')
-	cmd:option('-decay_factor',	0.5,		'external learning rate decay factor')
+	cmd:option('-optimizer',		'adam',		'optimizer algorithm: adam | sgd')
+	cmd:option('-lr',				0.1,		'initial learning rate')
+	cmd:option('-lr_decay',			0,			'learning rate decay')
+	cmd:option('-weightDecay',		1e-4,		'weight decay')
+	cmd:option('-momentum',			0.9,		'momentum, for sgd')
+	cmd:option('-decay_every',		25,			'external learning rate decay')
+	cmd:option('-decay_factor',		0.5,		'external learning rate decay factor')
+	cmd:option('-dropout'),			0.5,		'dropout for fully-connected layer'
+	cmd:option('-spatialDropout'),	0.5,		'dropout for convolution layer'
 	------------- Model options -----------------------
 	cmd:option('-netType',      'resnet', 'Options: resnet | preresnet | VGG | LeNet | SmallCNNet')
 	cmd:option('-depth',        34,       'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')

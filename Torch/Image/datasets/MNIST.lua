@@ -2,16 +2,16 @@ local t = require 'datasets/image_transform'
 
 local M = {}
 
-local MNISTDataset = torch.class('MNISTDataset', M)
+local MnistDataset = torch.class('MnistDataset', M)
 
-function MNISTDataset:__init( imageInfo, config )
+function MnistDataset:__init( imageInfo, config )
 	local split = config.split or nil
 	assert(imageInfo[split], split)
 	self.imageInfo = imageInfo[split]
 	self.config = config
 end
 
-function MNISTDataset:get( i )
+function MnistDataset:get( i )
 	local image = self.imageInfo.data[i]:float()
 	local label = self.imageInfo.labels[i]
 
@@ -21,7 +21,7 @@ function MNISTDataset:get( i )
 	}
 end
 
-function MNISTDataset:size()
+function MnistDataset:size()
 	return self.imageInfo.data:size(1)
 end
 
@@ -31,11 +31,11 @@ local meanstd = {
 	std = 78.67
 }
 
-function MNISTDataset:preprocess()
+function MnistDataset:preprocess()
 	if self.split == 'train' or self.split == 'val' or self.split == 'test' then
 		return function(img)
 			img = img:clone()
-			img:csub(meanstd.mean)
+			img:csub(meanstd.mean):mul(3.2/256.0)
 			return img
 		end
 	else
@@ -43,4 +43,4 @@ function MNISTDataset:preprocess()
 	end
 end
 
-return M.MNISTDataset
+return M.MnistDataset

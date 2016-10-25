@@ -17,8 +17,9 @@ function utils.write_json(path, obj)
 end
 
 require 'torch'
+M = {}
 -- code from https://github.com/joeyhng/trainplot
-local Plotter = torch.class('Plotter')
+local Plotter = torch.class('Plotter', M)
 
 function Plotter:__init(path, resume)
 	self.path = path .. '.json'
@@ -73,3 +74,5 @@ end
 function Plotter:save()
 	utils.write_json(self.checkpoint_path, self.figures)
 end
+
+return Plotter

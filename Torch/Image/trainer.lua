@@ -141,7 +141,7 @@ function Trainer:computeScore(output, target, nCrops)
 			:sum(2):squeeze(2)
    end
 
-	-- Coputes the top1 and top5 error rate
+	-- Computes the top1 and top5 error rate
 	local batchSize = output:size(1)
 
 	local _ , predictions = output:float():sort(2, true) -- descending (predictions is matrix of indices)

@@ -54,7 +54,7 @@ function DataLoader:run()
 		if idx <= size then
 			-- choose indices inside batch
 			local indices = perm:narrow(1, idx, math.min(batchSize, size - idx + 1))
-			if self.opt.data_aug == 0 then
+			if self.opt.dataAug == 0 then
 				local sample = self.dataset:get({indices:totable()})
 				local input = self.preprocess(sample.input)
 				collectgarbage()

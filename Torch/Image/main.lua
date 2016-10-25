@@ -16,7 +16,7 @@ require 'cutorch'
 require 'cunn'
 local DataLoader = require 'dataloader'
 local models = require 'models/init'
-local Trainer = require 'train'
+local Trainer = require 'trainer'
 local opts = require 'opts'
 local checkpoints = require 'checkpoints'
 local Plotter = require 'plotter'
@@ -68,7 +68,7 @@ for epoch = startEpoch, opt.maxEpochs do
 	end
 	
 	if epoch % opt.checkEvery == 0 then
-		checkpoints.save(epoch, model, trainer.optimState, bestModel, opt)
+		checkpoints.save(epoch, model, trainer.optimConfig, bestModel, opt)
 		plotter:checkpoint()
 	end
 	

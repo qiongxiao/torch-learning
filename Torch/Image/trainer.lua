@@ -36,13 +36,16 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 			learningRateDecay = opt.lr_decay,
 			weigthDecay = opt.weigthDecay
 		}
+	else
+		error('invalid optimizer ' .. opt.optimizer)
+	end
 	self.opt = opt
 	self.params, self.gradParams = model:getParameters()
 end
 
 function Trainer:train(epoch, dataloader, plotter)
 	-- Trains the model for a single epoch
-	self.optimState.learningRate = self:learningRate(epoch)
+	self.optimConfig.learningRate = self:learningRate(epoch)
 
 	local timer = torch.Timer()
 	local dataTimer = torch.Timer()
@@ -72,7 +75,7 @@ function Trainer:train(epoch, dataloader, plotter)
 		self.criterion:backward(self.model.output, self.target)
 		self.model:backward(self.input, self.criterion.gradInput)
 
-		optim.sgd(feval, self.params, self.optimState)
+		optim.sgd(feval, self.params, self.optimConfig)
 
 		local top1, top5 = self:computeScore(output, sample.target, 1)
 		top1Sum = top1Sum + top1*batchsize

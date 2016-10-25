@@ -30,12 +30,12 @@ function Plotter:__init(opt)
 		paths.mkdir(paths.dirname(self.path))
 		self.figures['info_str'] = {created_time=io.popen('date'):read(), tag='Plot'}
 	end
-	if opt.resume == 'none' then
+	if opt.resume ~= 'none' then
 		if paths.filep(self.checkpoint_path) then
 			self.figures = utils.read_json(self.checkpoint_path)
 			print('<plot init> fininsh loading plot')
 		else
-			assert(false, string.format('"%s" does not existed', self.checkpoint_path))
+			error(string.format('"%s" does not existed', self.checkpoint_path))
 		end
 	end
 end
@@ -75,4 +75,4 @@ function Plotter:save()
 	utils.write_json(self.checkpoint_path, self.figures)
 end
 
-return Plotter
+return M.Plotter

@@ -23,7 +23,6 @@ function M.parse(arg)
 	cmd:option('-data',			'',			'Path to dataset')
 	cmd:option('-dataset',		'cifar10',	'Options: imagenet | cifar10 | cifar100 | MNIST')
 	cmd:option('-nGPU',			1,			'Number of GPUs to use by default')
-	cmd:option('-gen',			'gen',		'Path to save generated files')
 	------------- Data options ------------------------
 	cmd:option('-dataAug',		0,			'whether augment data')
 	cmd:option('-colorspace',	'rgb',		'colorspace where normalization excutes')
@@ -45,12 +44,13 @@ function M.parse(arg)
 	cmd:option('-lr_decay',			0,			'learning rate decay')
 	cmd:option('-weightDecay',		1e-4,		'weight decay')
 	cmd:option('-momentum',			0.9,		'momentum, for sgd')
+	cmd:option('-decay',			'default',	'whether using external decay parameter')
 	cmd:option('-decay_every',		25,			'external learning rate decay')
 	cmd:option('-decay_factor',		0.5,		'external learning rate decay factor')
-	cmd:option('-dropout'),			0.5,		'dropout for fully-connected layer'
-	cmd:option('-spatialDropout'),	0.5,		'dropout for convolution layer'
+	cmd:option('-dropout',			0.5,		'dropout for fully-connected layer')
+	cmd:option('-convDropout',	0.5,		'dropout for convolution layer')
 	------------- Model options -----------------------
-	cmd:option('-netType',      'resnet', 'Options: resnet | preresnet | VGG | LeNet | SmallCNNet')
+	cmd:option('-netType',      'resnet', 'Options: resnet | preresnet | vggnet | lenet | SmallCNNet')
 	cmd:option('-depth',        34,       'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')
 	cmd:option('-shortcutType', '',       'Options: A | B | C')
 	cmd:option('-retrain',      'none',   'Path to model to retrain with')
@@ -92,6 +92,8 @@ function M.parse(arg)
 		-- Default shortcutType=A and nEpochs=164
 		opt.shortcutType = opt.shortcutType == '' and 'A' or opt.shortcutType
 		opt.maxEpochs = opt.maxEpochs == 0 and 164 or opt.maxEpochs
+	elseif opt.dataset == 'mnist' then
+		opt.maxEpochs = opt.maxEpochs == 0 and 100 or opt.maxEpochs
 	else
 		cmd:error('unknown dataset: ' .. opt.dataset)
 	end

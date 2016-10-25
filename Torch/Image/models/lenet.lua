@@ -23,7 +23,7 @@ local function createModel(opt)
 	elseif opt.dataset == 'cifar10' or opt.dataset == 'cifar100' then
 		size = 5 -- ((32 - 4) / 2 - 4) / 2
 		nClasses = (opt.dataset == 'cifar10') and 10 or 100
-	elseif opt.dataset == 'mnist'
+	elseif opt.dataset == 'mnist' then
 		size = 4 -- ((28 - 4) / 2 - 4) / 2
 		nClasses = 10
 	else
@@ -31,14 +31,14 @@ local function createModel(opt)
 	end
 	model:add(nn.Reshape(64 * size * size))
 	model:add(nn.Dropout(opt.dropout))
-	model:add(Linear(64 * size * size, 1024))
+	model:add(nn.Linear(64 * size * size, 1024))
 	model:add(ReLU())
 	model:add(nn.Linear(1024, nClasses))
 
 	local function ConvInit(name)
-		for k,v in pairs(model:findModules(name)) do
-			local n = v.kW*v.kH*v.nOutputPlane
-			v.weight:normal(0,math.sqrt(2/n))
+		for k, v in pairs(model:findModules(name)) do
+			local n = v.kW * v.kH * v.nOutputPlane
+			v.weight:normal(0, math.sqrt(2/n))
 			if cudnn.version >= 4000 then
 				v.bias = nil
 				v.gradBias = nil

@@ -22,7 +22,7 @@ local function isvalid(opt, cachePath)
 end
 
 function M.create(config)
-	local cachePath = paths.concat(config.opt.gen, config.opt.dataset .. '.t7')
+	local cachePath = paths.concat('gen', config.opt.dataset .. '.t7')
 	if not paths.filep(cachePath) or not isvalid(config.opt, cachePath) then
 		paths.mkdir('gen')
 

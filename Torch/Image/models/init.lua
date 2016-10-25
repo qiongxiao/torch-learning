@@ -22,14 +22,14 @@ function M.setup(opt, checkpoint)
 	if checkpoint then
 		local modelPath = paths.concat(opt.resume, checkpoint.modelFile)
 		assert(paths.filep(modelPath), 'Saved model not found: ' .. modelPath)
-		print('=> Resuming model from ' .. modelPath)
+		print('<model init> => Resuming model from ' .. modelPath)
 		model = torch.load(modelPath):cuda()
 	elseif opt.retrain ~= 'none' then
 		assert(paths.filep(opt.retrain), 'File not found: ' .. opt.retrain)
-		print('Loading model from file: ' .. opt.retrain)
+		print('<model init> Loading model from file: ' .. opt.retrain)
 		model = torch.load(opt.retrain):cuda()
 	else
-		print('=> Creating model from file: models/' .. opt.netType .. '.lua')
+		print('<model init> => Creating model from file: models/' .. opt.netType .. '.lua')
 		model = require('models/' .. opt.netType)(opt)
 	end
 
@@ -54,7 +54,7 @@ function M.setup(opt, checkpoint)
 
 	-- For resetting the classifier when fine-tuning on a different Dataset
 	if opt.resetClassifier and not checkpoint then
-		print(' => Replacing classifier with ' .. opt.nClasses .. '-way classifier')
+		print('<model init>  => Replacing classifier with ' .. opt.nClasses .. '-way classifier')
 
 		local orig = model:get(#model.modules)
 		assert(torch.type(orig) == 'nn.Linear', 'expected last layer to be fully connected')

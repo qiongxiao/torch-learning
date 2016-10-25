@@ -18,6 +18,7 @@ local CifarDataset = torch.class('CifarDataset', M)
 
 function CifarDataset:__init( imageInfo, config )
 	local split = config.split or nil
+	self.split = split
 	assert(imageInfo[split], split)
 	self.imageInfo = imageInfo[split]
 	self.split = split

@@ -8,7 +8,7 @@ Basic Torch code for classifying cifar10 dataset. The accuracy rate can be up to
 
 Here are some layer definitions:
 
-1. 
+1.
 > define Conv [nInputPlane, nOutputPlane, kernelHeight, kernelWidth, hStride, wStride, hPadding, wPadding]
 
 2.

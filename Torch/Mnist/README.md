@@ -2,6 +2,8 @@
 
 ## Introduction
 
+Old version -- recommend using nn_learning/torch/Image
+
 Basic torch code for classifying mnist dataset. The accuracy rate can be up to 99.20% after 10 epochs.
 
 LeNet Construction shows as follows,

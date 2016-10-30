@@ -32,6 +32,12 @@ local dtype = 'torch.CudaTensor'
 
 local model = nil
 local start_i = 0
+local optim_config = {
+	learningRate = opt.learning_rate
+}
+local train_loss_history = {}
+local val_loss_history = {}
+local val_loss_history_it = {}
 
 if opt.init_from ~= '' then
 	print('Initializing from ', opt.init_from)
@@ -39,6 +45,10 @@ if opt.init_from ~= '' then
 	model = checkpoint.model:type(dtype)
 	if opt.reset_iterations == 0 then
 		start_i = checkpoint.i
+		optim_config = checkpoint.optim_config
+		train_loss_history = checkpoint.train_loss_history
+		val_loss_history = checkpoint.val_loss_history
+		val_loss_history_it = checkpoint.val_loss_history_it
 	end
 else
 	model = nn.LeNetModel():type(dtype)
@@ -89,14 +99,9 @@ local function eval( dataset )
 	return eval_loss, eval_accuracy
 end
 
-local optim_config = {
-	learningRate = opt.learning_rate
-}
 local num_train = loader.split_sizes['train']
 local num_iterations = opt.max_epochs * num_train
-local train_loss_history = {}
-local val_loss_history = {}
-local val_loss_history_it = {}
+
 local last_val_accuracy = 0
 local decreasing = 0
 local plotter = Plotter('plot/out.json')
@@ -162,6 +167,7 @@ for i = start_i + 1, num_iterations do
 		plotter:add('Accuracy', 'Validation', #val_loss_history, val_accuracy)
 		model:float()
 		checkpoint.model = model
+		checkpoint.optim_config = optim_config
 		local filename = string.format('%s_%d.t7', opt.checkpoint_name, i)
 		paths.mkdir(paths.dirname(filename))
 		torch.save(filename, checkpoint)

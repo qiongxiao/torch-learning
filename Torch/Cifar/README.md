@@ -2,6 +2,8 @@
 
 ## Introduction
 
+Old version -- recommend using nn_learning/torch/Image
+
 Basic Torch code for classifying cifar10 dataset. The accuracy rate can be up to 89% after 50 epochs.
 
 ## VGGnet

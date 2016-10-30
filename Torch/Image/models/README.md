@@ -13,19 +13,19 @@ Basic torch code for different datasets using different model types.
 
 ## Definition
 
-> define iChanel : the number of chanels of input image
+> define iChannels : the number of chanels of input image
 >
 > define oSize : the height/width of output of conv stage before fully-connected layer
 >
 > define nClasses : the number of classes
 >
-> mnist: iChanel = 1, nClasses = 10
+> mnist: iChannels = 1, nClasses = 10
 >
-> cifar10 : iChanel = 3, nClasses = 10
+> cifar10 : iChannels = 3, nClasses = 10
 >
-> cifar100: iChanel = 3, nClasses = 100
+> cifar100: iChannels = 3, nClasses = 100
 >
-> imagenet: iChanel = 3, nClasses = 1000
+> imagenet: iChannels = 3, nClasses = 1000
 
 Here are some layer definitions:
 
@@ -54,7 +54,7 @@ Here are some layer definitions:
 
 LeNet Construction shows as follows,
 
-> Conv[iChanel, 32, 5, 5] --> ReLU --> maxPool --> Conv[32, 64, 5, 5] -> ReLU -> maxPool -> Dropout -> FC[oSize*oSize*64, 1024] -> ReLU -> FC[1024, 10]
+> Conv[iChannels, 32, 5, 5] --> ReLU --> maxPool --> Conv[32, 64, 5, 5] -> ReLU -> maxPool -> Dropout -> FC[oSize*oSize*64, 1024] -> ReLU -> FC[1024, 10]
 
 ## VGGnet
 

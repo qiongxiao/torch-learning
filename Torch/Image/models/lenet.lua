@@ -14,24 +14,24 @@ local function createModel(opt)
 
 	local model = nn.Sequential()
 
-	local size, nClasses, iChanel
+	local size, nClasses, iChannels
 	if opt.dataset == 'imagenet' then
-		iChanel = 3
+		iChannels = 3
 		size = 53 -- ((224 - 4) / 2 - 4) / 2
 		nClasses = 1000
 	elseif opt.dataset == 'cifar10' or opt.dataset == 'cifar100' then
-		iChanel = 3
+		iChannels = 3
 		size = 5 -- ((32 - 4) / 2 - 4) / 2
 		nClasses = (opt.dataset == 'cifar10') and 10 or 100
 	elseif opt.dataset == 'mnist' then
-		iChanel = 1
+		iChannels = 1
 		size = 4 -- ((28 - 4) / 2 - 4) / 2
 		nClasses = 10
 	else
 		error('invalid dataset ' .. opt.dataset)
 	end
 
-	model:add(SRM(iChanel, 32))
+	model:add(SRM(iChannels, 32))
 	model:add(SRM(32, 64))
 	model:add(nn.Reshape(64 * size * size))
 	if opt.dropout > 0 then

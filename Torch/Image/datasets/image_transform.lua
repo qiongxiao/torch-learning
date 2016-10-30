@@ -65,13 +65,11 @@ function M.ColorNormalize( meanstd, config )
 				assert(yuvkernel, 'invalid yuv kernel')
 				local num_imgs = imgs:size(1)
 				for i = 1, num_imgs do
-					local yuv = image.rgb2yuv(imgs[i])
-					imgs[i][1] = yuvkernel(yuv[{{1}}])
-					imgs[i][2]:add(-meanstd['yuv'].mean[2])
-					imgs[i][2]:div(meanstd['yuv'].std[2])
-					imgs[i][3]:add(-meanstd['yuv'].mean[3])
-					imgs[i][3]:div(meanstd['yuv'].std[3])
+					imgs[i] = image.rgb2yuv(imgs[i])
+					imgs[i][1] = yuvkernel(imgs[{{1}}])
 				end
+				imgs:narrow(2, 2):add(-meanstd['yuv'].mean[2]):div(meanstd['yuv'].std[2])
+				imgs:narrow(2, 3):add(-meanstd['yuv'].mean[3]):div(meanstd['yuv'].std[3])
 			else
 				error('invalid colorspace: ' .. config.colorspace)
 			end

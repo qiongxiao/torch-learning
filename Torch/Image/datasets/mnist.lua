@@ -4,7 +4,7 @@ local M = {}
 
 local MnistDataset = torch.class('MnistDataset', M)
 
-function MnistDataset:__init( imageInfo, config )
+function MnistDataset:__init( imageInfo, opt, config )
 	local split = config.split or nil
 	self.split = split
 	assert(imageInfo[split], split)

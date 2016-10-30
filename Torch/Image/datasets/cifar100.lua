@@ -16,7 +16,7 @@ local M = {}
 
 local CifarDataset = torch.class('CifarDataset', M)
 
-function CifarDataset:__init( imageInfo, config )
+function CifarDataset:__init( imageInfo, opt, config )
 	local split = config.split or nil
 	self.split = split
 	assert(imageInfo[split], split)
@@ -56,8 +56,8 @@ local meanstd = {
 		std  = {68.2,  65.4,  70.4},
 	}
 	yuv = {
-		mean = {},
-		std = {},
+		mean = {0, 0, 0},
+		std = {0, 0, 0},
 	}
 }
 

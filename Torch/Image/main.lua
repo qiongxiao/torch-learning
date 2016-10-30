@@ -12,20 +12,19 @@ require 'torch'
 require 'paths'
 require 'optim'
 require 'nn'
-require 'cutorch'
-require 'cunn'
-require 'cudnn'
 
+local opts = require 'opts'
 local DataLoader = require 'dataloader'
 local models = require 'models/init'
 local Trainer = require 'trainer'
-local opts = require 'opts'
 local checkpoints = require 'checkpoints'
 local Plotter = require 'plotter'
 
 torch.setdefaulttensortype('torch.FloatTensor')
 
 local opt = opts.parse(arg)
+torch.manualSeed(opt.manualSeed)
+cutorch.manualSeedAll(opt.manualSeed)
 
 -- Load previous checkpoint, if it exists
 local checkpoint, optimState = checkpoints.loadLatestInfo(opt)
@@ -51,7 +50,7 @@ if opt.testOnly then
 	return
 end
 
-local startEpoch = checkpoint and checkpoint.epoch + 1 or opt.startEpoch
+local startEpoch = checkpoint and checkpoint.epoch + 1 or 1
 local bestTop1 = math.huge
 local bestTop5 = math.huge
 for epoch = startEpoch, opt.maxEpochs do
@@ -75,9 +74,9 @@ for epoch = startEpoch, opt.maxEpochs do
 		plotter:checkpoint()
 	end
 	
-	plotter:add('Train Loss / Epoch', 'Train', epoch, trainLoss)
+	plotter:add('Train Loss - Epoch', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Train', epoch, trainLoss)
-	plotter:add('Accuracy', 'Validation', epoch, testTop1)
+	plotter:add('top1 error', 'Validation', epoch, testTop1)
 	plotter:add('Loss', 'Validation', epoch, testLoss)
 end
 

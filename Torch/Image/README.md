@@ -45,6 +45,4 @@ This will load the trained checkpoint checkpoints/model_best.t7 from the previou
 
 1. still working on imagenet, resnet, preresnet.
 
-2. dataloader is single thread version - working on multithread version
-
-3. please read the options when running
+2. please read the options (opts.lua) when running

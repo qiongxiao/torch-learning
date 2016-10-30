@@ -1,3 +1,4 @@
 /plot/*.json
 /gen/*
 /checkpoints/*
+/pretrained/*

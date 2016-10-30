@@ -93,7 +93,7 @@ function Trainer:train(epoch, dataloader, plotter)
 		timer:reset()
 		dataTimer:reset()
 		if self.opt.plotEvery == 1 then
-			plotter:add('Train Loss / Iteration', 'Train', (epoch-1)*trainSize+n, loss)
+			plotter:add('Train Loss - Iteration', 'Train', (epoch-1)*trainSize+n, loss)
 		end
 	end
 	return top1Sum / N, top5Sum / N, lossSum / N

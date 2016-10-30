@@ -50,7 +50,7 @@ You can run the training script like this:
 
 You can change the batchsize and max_epoches like this
 
-> th train.lua -batch_size 100 -max_epoches 20
+> th train.lua -batch_size 100 -max_epochs 20
 
 You can observe training situation by open plot/showplot.html?path=out.json
 
@@ -64,8 +64,6 @@ This will load the trained checkpoint cv/checkpoint_20000.t7 from the previous s
 
 **NOTE**: 
 
-1. checkpoint can save model but there are some problem continuing training from checkpoint because I forgot to save optimState.
+1. "BatchFlip.lua" comes from [cifar.torch by szagoruyko](https://github.com/szagoruyko/cifar.torch). I have NOT tried it yet and thus I do NOT whether there's bug.
 
-2. "BatchFlip.lua" comes from [cifar.torch by szagoruyko](https://github.com/szagoruyko/cifar.torch). I have NOT tried it yet and thus I do NOT whether there's bug.
-
-3. cifar10 dataset is divided into 3 parts: train(45000), val(5000), test(10000)
+2. cifar10 dataset is divided into 3 parts: train(45000), val(5000), test(10000)

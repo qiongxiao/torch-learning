@@ -18,7 +18,6 @@ cmd:option('-train_full', 1)
 -- Model options
 cmd:option('-init_from', '')
 cmd:option('-reset_iterations', 1)
-cmd:option('-model_type', 'VGG')
 cmd:option('-dropout', 0.5)
 cmd:option('-conv_dropout', 0.4)
 cmd:option('-batchnorm', 1)
@@ -86,14 +85,7 @@ if opt.init_from ~= '' then
 	model = checkpoint.model:type(dtype)
 	if opt.reset_iterations == 0 then
 		start_i = checkpoint.i
-
-		optim_config['learningRate'] = checkpoint.opt.learning_rate * ((checkpoint.opt.lr_decay_factor)^(math.floor((math.floor(start_i / num_train) + 1) / checkpoint.opt.lr_decay_every)))
-		optimization = checkpoint.opt.optimization
-		if optimization == 'sgd' then
-			optim_config['weightDecay'] = checkpoint.opt.weight_decay
-			optim_config['learningRateDecayar'] = checkpoint.opt.lr_decay
-			optim_config['momentum'] = checkpoint.opt.momentum
-		end
+		optim_config = checkpoint.optim_config
 
 		train_loss_history = checkpoint.train_loss_history
 		val_loss_history = checkpoint.val_loss_history
@@ -212,6 +204,7 @@ for i = start_i + 1, num_iterations do
 		
 		model:float()
 		checkpoint.model = model
+		checkpoint.optim_config = optim_config
 		local filename = string.format('%s_%d_%d.t7', opt.checkpoint_name, epoch - 1, i)
 		paths.mkdir(paths.dirname(filename))
 		torch.save(filename, checkpoint)

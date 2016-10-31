@@ -7,7 +7,7 @@
 --  LICENSE file in the root directory of this source tree. An additional grant
 --  of patent rights can be found in the PATENTS file in the same directory.
 --
---  ImageNet and CIFAR-10 datasets
+--  mscoco datasets
 --
 --]]
 
@@ -31,7 +31,7 @@ function M.create(config)
 	end
 	local imageInfo = torch.load(cachePath)
 	local Dataset = require('datasets/' .. config.opt.dataset)
-	return Dataset(imageInfo, opt, config)
+	return Dataset(imageInfo, opt, config.split)
 end
 
 return M

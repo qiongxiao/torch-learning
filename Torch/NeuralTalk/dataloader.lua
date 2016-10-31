@@ -23,32 +23,15 @@ function DataLoader.create(opt)
 	-- The train and val loader
 	local loaders = {}
 
-	if opt.dataset == 'MNIST' then
-		for i, split in ipairs{'train', 'val', 'test'} do
-			local config = {
-				opt = opt,
-				split = split,
-			}
-			local dataset = datasets.create(config)
-			loaders[i] = M.DataLoader(dataset, opt, split)
-		end
-	else
-		local yuvkernel = nil
-		if opt.colorspace == 'yuv' then
-			require 'torch'
-			require 'nn'
-			yuvkernel = nn.SpatialContrastiveNormalization(1, image.gaussian1D(7))
-		end
-		for i, split in ipairs{'train', 'val'} do
-			local config = {
-				opt = opt,
-				split = split,
-				yuvkernel = yuvkernel
-			}
-			local dataset = datasets.create(config)
-			loaders[i] = M.DataLoader(dataset, opt, split)
-		end
+	for i, split in ipairs{'train', 'val'} do
+		local config = {
+			opt = opt,
+			split = split,
+		}
+		local dataset = datasets.create(config)
+		loaders[i] = M.DataLoader(dataset, opt, split)
 	end
+
 	return table.unpack(loaders)
 end
 
@@ -100,37 +83,26 @@ function DataLoader:run()
 		if idx <= size then
 			-- choose indices inside batch
 			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1)):long()
-			if self.dataAug == 0 then
-				local sample = self.dataset:getbatch(indices)
+			local sz = indices:size(1)
+			local batch, imageSize
+			local target = torch.IntTensor(sz)
+			for i, idx in ipairs(indices:totable()) do
+				local sample = self.dataset:get(idx)
 				local input = self.preprocess(sample.input)
-				collectgarbage()
-				idx = idx + batchsize
-				return {
-					input = input,
-					target = sample.target
-				}
-			else
-				local sz = indices:size(1)
-				local batch, imageSize
-				local target = torch.IntTensor(sz)
-				for i, idx in ipairs(indices:totable()) do
-					local sample = self.dataset:get(idx)
-					local input = self.preprocess(sample.input)
-					if not batch then
-						imageSize = input:size():totable()
-						if nCrops > 1 then table.remove(imageSize, 1) end
-						batch = torch.FloatTensor(sz, nCrops, table.unpack(imageSize))
-					end
-					batch[i]:copy(input)
-					target[i] = sample.target
+				if not batch then
+					imageSize = input:size():totable()
+					if nCrops > 1 then table.remove(imageSize, 1) end
+					batch = torch.FloatTensor(sz, nCrops, table.unpack(imageSize))
 				end
-				collectgarbage()
-				idx = idx + batchsize
-				return {
-					input = batch:view(sz * nCrops, table.unpack(imageSize)),
-					target = target,
-				}
+				batch[i]:copy(input)
+				target[i] = sample.target
 			end
+			collectgarbage()
+			idx = idx + batchsize
+			return {
+				input = batch:view(sz * nCrops, table.unpack(imageSize)),
+				target = target,
+			}
 		else
 			return nil
 		end
@@ -139,52 +111,34 @@ function DataLoader:run()
 	local function enqueue()
 		while idx <= size and threads:acceptsjob() do
 			local indices = perm:narrow(1, idx, math.min(batchSize, size - idx + 1))
-			if self.dataAug == 0 then
-				threads:addjob(
-					function(indices)
-						local sample = self.dataset:getbatch(indices)
-						local input = self.preprocess(sample.input)
-						collectgarbage()
-						return {
-							input = input,
-							target = sample.target
-						}
-					end,
-					function(_sample_)
-						sample = _sample_
-					end,
-					indices
-				)
-			else
-				threads:addjob(
-					function(indices, nCrops)
-						local sz = indices:size(1)
-						local batch, imageSize
-						local target = torch.IntTensor(sz)
-						for i, idx in ipairs(indices:totable()) do
-							local sample = _G.dataset:get(idx)
-							local input = _G.preprocess(sample.input)
-							if not batch then
-								imageSize = input:size():totable()
-								if nCrops > 1 then table.remove(imageSize, 1) end
-								batch = torch.FloatTensor(sz, nCrops, table.unpack(imageSize))
-							end
-							batch[i]:copy(input)
-							target[i] = sample.target
+			threads:addjob(
+				function(indices, nCrops)
+					local sz = indices:size(1)
+					local batch, imageSize
+					local target = torch.IntTensor(sz)
+					for i, idx in ipairs(indices:totable()) do
+						local sample = _G.dataset:get(idx)
+						local input = _G.preprocess(sample.input)
+						if not batch then
+							imageSize = input:size():totable()
+							if nCrops > 1 then table.remove(imageSize, 1) end
+							batch = torch.FloatTensor(sz, nCrops, table.unpack(imageSize))
 						end
-						collectgarbage()
-						return {
-							input = batch:view(sz * nCrops, table.unpack(imageSize)),
-							target = target,
-						}
-					end,
-					function(_sample_)
-						sample = _sample_
-					end,
-					indices,
-					self.nCrops
-				)
-			end
+						batch[i]:copy(input)
+						target[i] = sample.target
+					end
+					collectgarbage()
+					return {
+						input = batch:view(sz * nCrops, table.unpack(imageSize)),
+						target = target,
+					}
+				end,
+				function(_sample_)
+					sample = _sample_
+				end,
+				indices,
+				self.nCrops
+			)
 			idx = idx + batchSize
 		end
 	end

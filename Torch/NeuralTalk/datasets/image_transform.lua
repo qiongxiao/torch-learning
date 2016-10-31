@@ -30,9 +30,9 @@ function M.ColorNormalize( meanstd, netType )
 	return function(img)
 		img = img:clone()
 		for i = 1, 3 do
-			img[i]:add(-meanstd[net_type].mean[i])
+			img[i]:add(-meanstd.mean[i])
 			if netType == 'resnet' then
-				img[i]:div(meanstd['resnet'].std[i])
+				img[i]:div(meanstd.std[i])
 			end
 		end
 		return img

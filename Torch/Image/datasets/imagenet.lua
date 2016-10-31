@@ -20,11 +20,11 @@ local ffi = require 'ffi'
 local M = {}
 local ImagenetDataset = torch.class('resnet.ImagenetDataset', M)
 
-function ImagenetDataset:__init(imageInfo, opt, split)
-	self.imageInfo = imageInfo[split]
+function ImagenetDataset:__init(imageInfo, opt, config)
+	self.split = config.split
+	self.imageInfo = imageInfo[self.split]
 	self.opt = opt
-	self.split = split
-	self.dir = paths.concat(opt.data, split)
+	self.dir = paths.concat(opt.data, self.split)
 	assert(paths.dirp(self.dir), 'directory does not exist: ' .. self.dir)
 end
 

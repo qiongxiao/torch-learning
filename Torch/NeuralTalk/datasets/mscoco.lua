@@ -81,13 +81,8 @@ function MscocoDataset:size()
 end
 
 local meanstd = {
-	vgg = {
-		mean = {0.483, 0.456, 0.406} -- mean = {123.68, 116.779, 103.939}
-	}
-	resnet = {
-		mean = { 0.485, 0.456, 0.406 },
-		std = { 0.229, 0.224, 0.225 },
-	}
+	mean = { 0.485, 0.456, 0.406 },
+	std = { 0.229, 0.224, 0.225 },
 }
 local pca = {
 	eigval = torch.Tensor{ 0.2175, 0.0188, 0.0045 },
@@ -108,14 +103,14 @@ function ImagenetDataset:preprocess()
 					saturation = 0.4,
 				}),
 				t.Lighting(0.1, pca.eigval, pca.eigvec),
-				t.ColorNormalize(meanstd),
+				t.ColorNormalize(meanstd, self.opt.cnn_type),
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' then
 			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
 			return t.Compose{
 				t.Scale(256),
-				t.ColorNormalize(meanstd),
+				t.ColorNormalize(meanstd, self.opt.cnn_type),
 				Crop(224),
 			}
 		else
@@ -125,20 +120,14 @@ function ImagenetDataset:preprocess()
 		if self.split == 'train' then
 			return t.Compose{
 				t.RandomSizedCrop(224),
-				t.ColorJitter({
-					brightness = 0.4,
-					contrast = 0.4,
-					saturation = 0.4,
-				}),
-				t.Lighting(0.1, pca.eigval, pca.eigvec),
-				t.ColorNormalize(meanstd),
+				t.ColorNormalize(meanstd, self.opt.cnn_type),
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' then
 			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
 			return t.Compose{
 				t.Scale(256),
-				t.ColorNormalize(meanstd),
+				t.ColorNormalize(meanstd, self.opt.cnn_type),
 				Crop(224),
 			}
 		else

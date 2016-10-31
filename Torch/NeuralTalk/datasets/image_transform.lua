@@ -26,55 +26,16 @@ function  M.Compose( transforms )
 	end
 end
 
-function M.ColorNormalize( meanstd, config )
-	local colorspace = config.opt.colorspace or 'rgb'
-	local yuvkernel = config.yuvkernel or nil
-	local dataAug = config.opt.dataAug or 0
-	if dataAug == 1 then
-		return function(img)
-			img = img:clone()
-			if colorspace == 'rgb' then
-				local c = img:size(1)
-				for i = 1, c do
-					img[i]:add(-meanstd['rgb'].mean[i])
-					img[i]:div(meanstd['rgb'].std[i])
-				end
-			elseif colorspace == 'yuv' then
-				assert(yuvkernel, 'invalid yuv kernel')
-				local yuv = image.rgb2yuv(img)
-				img[1] = yuvkernel(yuv[{{1}}])
-				img[2]:add(-meanstd['yuv'].mean[2])
-				img[2]:div(meanstd['yuv'].std[2])
-				img[3]:add(-meanstd['yuv'].mean[3])
-				img[3]:div(meanstd['yuv'].std[3])
-			else
-				error('invalid colorspace: ' .. config.colorspace)
+function M.ColorNormalize( meanstd, netType )
+	return function(img)
+		img = img:clone()
+		for i = 1, 3 do
+			img[i]:add(-meanstd[net_type].mean[i])
+			if netType == 'resnet' then
+				img[i]:div(meanstd['resnet'].std[i])
 			end
-			return img
 		end
-	else
-		return function(imgs)
-			imgs = imgs:clone()
-			if colorspace == 'rgb' then
-				local c = imgs:size(2)
-				for i = 1, c do
-					imgs:select(2, i):add(-meanstd['rgb'].mean[i])
-					imgs:select(2, i):div(meanstd['rgb'].std[i])
-				end
-			elseif colorspace == 'yuv' then
-				assert(yuvkernel, 'invalid yuv kernel')
-				local num_imgs = imgs:size(1)
-				for i = 1, num_imgs do
-					imgs[i] = image.rgb2yuv(imgs[i])
-					imgs[i][1] = yuvkernel(imgs[{{1}}])
-				end
-				imgs:narrow(2, 2):add(-meanstd['yuv'].mean[2]):div(meanstd['yuv'].std[2])
-				imgs:narrow(2, 3):add(-meanstd['yuv'].mean[3]):div(meanstd['yuv'].std[3])
-			else
-				error('invalid colorspace: ' .. config.colorspace)
-			end
-			return imgs
-		end
+		return img
 	end
 end
 

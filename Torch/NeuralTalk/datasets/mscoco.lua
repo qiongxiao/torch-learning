@@ -80,3 +80,71 @@ function MscocoDataset:size()
 	return self.imageInfo.imageCapIdx:size(1)
 end
 
+local meanstd = {
+	vgg = {
+		mean = {0.483, 0.456, 0.406} -- mean = {123.68, 116.779, 103.939}
+	}
+	resnet = {
+		mean = { 0.485, 0.456, 0.406 },
+		std = { 0.229, 0.224, 0.225 },
+	}
+}
+local pca = {
+	eigval = torch.Tensor{ 0.2175, 0.0188, 0.0045 },
+	eigvec = torch.Tensor{
+		{ -0.5675,  0.7192,  0.4009 },
+		{ -0.5808, -0.0045, -0.8140 },
+		{ -0.5836, -0.6948,  0.4203 },
+	},
+}
+function ImagenetDataset:preprocess()
+	if self.opt.cnn_type == 'resnet' then
+		if self.split == 'train' then
+			return t.Compose{
+				t.RandomSizedCrop(224),
+				t.ColorJitter({
+					brightness = 0.4,
+					contrast = 0.4,
+					saturation = 0.4,
+				}),
+				t.Lighting(0.1, pca.eigval, pca.eigvec),
+				t.ColorNormalize(meanstd),
+				t.HorizontalFlip(0.5),
+			}
+		elseif self.split == 'val' then
+			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
+			return t.Compose{
+				t.Scale(256),
+				t.ColorNormalize(meanstd),
+				Crop(224),
+			}
+		else
+			error('invalid split: ' .. self.split)
+		end
+	elseif self.opt.cnn_type == 'vgg' then
+		if self.split == 'train' then
+			return t.Compose{
+				t.RandomSizedCrop(224),
+				t.ColorJitter({
+					brightness = 0.4,
+					contrast = 0.4,
+					saturation = 0.4,
+				}),
+				t.Lighting(0.1, pca.eigval, pca.eigvec),
+				t.ColorNormalize(meanstd),
+				t.HorizontalFlip(0.5),
+			}
+		elseif self.split == 'val' then
+			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
+			return t.Compose{
+				t.Scale(256),
+				t.ColorNormalize(meanstd),
+				Crop(224),
+			}
+		else
+			error('invalid split: ' .. self.split)
+		end		
+	else
+		error('invalid cnn_type: ' .. self.opt.cnn_type)
+	end
+end

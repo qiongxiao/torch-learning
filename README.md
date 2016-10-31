@@ -37,7 +37,7 @@ Basic torch code for different datasets using different model types. The code or
 | mnist			| lenet						|
 | cifar10		| lenet, vggnet, resnet		|
 | cifar100		| lenet, vggnet, resnet		|
-| (imagenet)	| lenet, vggnet, resnet		|
+| imagenet		| lenet, vggnet, resnet		|
 
 **NOTE**:
 

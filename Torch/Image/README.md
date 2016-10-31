@@ -9,7 +9,7 @@ Basic torch code for different datasets using different model types.
 | mnist			| lenet						|
 | cifar10		| lenet, vggnet, resnet		|
 | cifar100		| lenet, vggnet, resnet		|
-| (imagenet)	| lenet, vggnet, resnet		|
+| imagenet		| lenet, vggnet, resnet		|
 
 The code organization follows (some codes are copied from) [torch-resnet by facebook](https://github.com/facebook/fb.resnet.torch)
 

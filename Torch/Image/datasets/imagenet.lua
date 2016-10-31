@@ -1,3 +1,5 @@
+--[[
+-- code from "https://raw.githubusercontent.com/facebook/fb.resnet.torch/master/datasets/imagenet.lua"
 --
 --  Copyright (c) 2016, Facebook, Inc.
 --  All rights reserved.
@@ -8,6 +10,7 @@
 --
 --  ImageNet dataset loader
 --
+--]]
 
 local image = require 'image'
 local paths = require 'paths'

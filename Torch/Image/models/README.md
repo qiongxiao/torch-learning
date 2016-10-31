@@ -123,12 +123,12 @@ default shortcut type = A
 
 > define n = (depth - 2) / 6 - 1 (n must be integer)
 >
-> ConvBNReLU[3, 16] --> { basicblock[16, 1] }*(n+1) --> basicblock[32, 2] --> { basicblock[32, 1] }*n --> basicblock[64, 2] --> { basicblock[64, 1] }*n -->  SpatialAveragePooling[8, 8, 1, 1] -->
+> ConvBNReLU[3, 16] --> { basicblock[16, 1] }\*(n+1) --> basicblock[32, 2] --> { basicblock[32, 1] }\*n --> basicblock[64, 2] --> { basicblock[64, 1] }\*n -->  SpatialAveragePooling[8, 8, 1, 1] -->
 >
 > View --> FC[64, 10]
 
 size changes
-> 3*32*32 --> 16*32*32 --> 16*32*32 --> 32*16*16 --> 32*16*16 --> 64*8*8 --> 64*8*8 --> 64*1*1
+> 3\*32\*32 --> 16\*32\*32 --> 16\*32\*32 --> 32\*16\*16 --> 32\*16\*16 --> 64\*8\*8 --> 64\*8\*8 --> 64\*1\*1
 
 #### cifar100
 
@@ -142,9 +142,9 @@ See the code
 
 Take depth = 34 as example.
 
-> Conv[3, 64, 7, 7, 2, 2, 3, 3] --> SpatialBatchNorm() -> ReLU() -> SpatialMaxPooling[3, 3, 2, 2, 1, 1] --> { bottleneck[64, 1] }*3 --> bottleneck[128, 2] --> { bottleneck[128, 1] }*3 --> bottleneck[256, 2] --> { bottleneck[256, 1] }*5 --> bottleneck[512, 2] --> { bottleneck[512, 1] }*2 --> SpatialAveragePooling[7, 7, 1, 1] -->
+> Conv[3, 64, 7, 7, 2, 2, 3, 3] --> SpatialBatchNorm() -> ReLU() -> SpatialMaxPooling[3, 3, 2, 2, 1, 1] --> { bottleneck[64, 1] }\*3 --> bottleneck[128, 2] --> { bottleneck[128, 1] }\*3 --> bottleneck[256, 2] --> { bottleneck[256, 1] }\*5 --> bottleneck[512, 2] --> { bottleneck[512, 1] }\*2 --> SpatialAveragePooling[7, 7, 1, 1] -->
 >
 > View --> FC[512, 1000]
 
 size changes
-> 3*224*224 --> 64*112*112 --> 64*56*56 --> 64*56*56 --> 128*28*28 --> 128*28*28 --> 256*14*14 --> 256*14*14 --> 512*7*7 --> 512*7*7 --> 512*1*1
+> 3\*224\*224 --> 64\*112\*112 --> 64\*56\*56 --> 64\*56\*56 --> 128\*28\*28 --> 128\*28\*28 --> 256\*14\*14 --> 256\*14\*14 --> 512\*7\*7 --> 512\*7\*7 --> 512\*1\*1

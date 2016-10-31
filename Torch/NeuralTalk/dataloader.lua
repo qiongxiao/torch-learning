@@ -37,7 +37,7 @@ end
 
 function DataLoader:__init(dataset, opt, split)
 	self.nThreads = opt.nThreads
-	self.dataAug = opt.dataAug
+	self.seqPerImg = opt.seqPerImg
 	self.nCrops = (split ~= 'train' and opt.tenCrop) and 10 or 1
 	self.batchsize = math.floor(opt.batchsize / self.nCrops)
 

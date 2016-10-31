@@ -54,7 +54,7 @@ function M.parse(arg)
 	------------- Model options -----------------------
 	cmd:option('-netType',          'resnet',   'Options: resnet | preresnet | vggnet | lenet | SmallCNNet')
 	cmd:option('-depth',            34,         'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')
-	cmd:option('-shortcutType',     '',         'Options: A | B | C')
+	cmd:option('-shortcutType',     '',         'Options: A | B')
 	cmd:option('-retrain',          'none',     'Path to model to retrain with')
 	------------- Model options -----------------------
 	cmd:option('-shareGradInput',   'false',    'Share gradInput tensors to reduce memory usage')

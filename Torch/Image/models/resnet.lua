@@ -27,8 +27,7 @@ local function createModel(opt)
 
 	-- The shortcut layer is either identity or 1x1 convolution
 	local function shortcut(nInputPlane, nOutputPlane, stride)
-		local useConv = shortcutType == 'C' or
-			(shortcutType == 'B' and nInputPlane ~= nOutputPlane)
+		local useConv = shortcutType == 'B' and nInputPlane ~= nOutputPlane
 		if useConv then
 			-- 1x1 convolution
 			return nn.Sequential()
@@ -93,7 +92,7 @@ local function createModel(opt)
 	-- Creates count residual blocks with specified number of features
 	local function layer(block, features, count, stride)
 		local s = nn.Sequential()
-		for i=1,count do
+		for i = 1, count do
 			s:add(block(features, i == 1 and stride or 1))
 		end
 		return s

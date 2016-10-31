@@ -43,6 +43,4 @@ This will load the trained checkpoint checkpoints/model_best.t7 from the previou
 
 ##NOTE:
 
-1. still working on imagenet, resnet, preresnet.
-
-2. please read the options (opts.lua) when running
+1. please read the options (opts.lua) when running

@@ -112,7 +112,8 @@ new layer definition:
 >
 > Conv[nInputPlane, nOutputPlane, 3, 3, stride, stride, 1, 1] --> SpatialBatchNorm[nOutputPlane] --> ReLU() --> Conv[nOutputPlane, nOutputPlane, 3, 3, stride, stride, 1, 1] -->  SpatialBatchNorm[nOutputPlane] {--> Add(shortcut_type[nInputPlane, nOutputPlane, stride])} --> ReLU()
 
-4. define bottleneck[nOutputPlane, stride]
+4.
+> define bottleneck[nOutputPlane, stride]
 >
 > Conv[nInputPlane, nOutputPlane, 1, 1, stride, stride, 1, 1] --> SpatialBatchNorm[nOutputPlane] --> ReLU() --> Conv[nOutputPlane, nOutputPlane, 3, 3, stride, stride, 1, 1] --> SpatialBatchNorm[nOutputPlane] --> ReLU() --> Conv[nOutputPlane, nOutputPlane * 4, 3, 3, stride, stride, 1, 1] --> SpatialBatchNorm[nOutputPlane * 4] --> {--> Add[nInputPlane, nOutputPlane * 4, stride])} --> ReLU()
 

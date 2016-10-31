@@ -41,6 +41,4 @@ Basic torch code for different datasets using different model types. The code or
 
 **NOTE**:
 
-	1. still working on imagenet, resnet.
-
-	2. please read the options when running
+	1. please read the options when running

@@ -5,24 +5,21 @@
 --]]
 
 require 'nn'
-local lstmCell = require 'models.lstmCell'
 
-local layer, parent = torch.class('nn.LSTM', 'nn.Module')
+local layer, parent = torch.class('nn.dynamicLSTM', 'nn.Module')
 
-function layer:__init(inputSize, outputSize, hidenStateSize, rLength, rDepth, dropout, skipFlag)
+function layer:__init(cell, rLength, rDepth, skipFlag)
 	parent.__init(self)
 	self.inputSize = inputSize
 	self.outputSize = outputSize
 	self.rLength = rLength
 	self.rDepth = rDepth
-	skipFlag = skipFlag or false
-	self.skipFlag = skipFlag
-	self.cell = lstmCell(inputSize, outputSize, hidenStateSize, rDepth, dropout)
+	self.cell = cell
 	self:_createInitState(1) -- will be lazily resized later during forward passes
 end
 
 function layer:_createInitState(batchsize)
-	assert(batchsize ~= nil, 'batch size for lstm must be provided')
+	assert(batchsize ~= nil, 'batch size for dynamic lstm must be provided')
 	-- construct the initial state for the LSTM
 	if not self.initState then self.initState = {} end -- lazy init
 	for h = 1, self.rDepth * 2 do
@@ -43,10 +40,6 @@ function layer:createSlices()
 	for t = 2, self.rLength do
 		self.slices[t] = self.cell:clone('weight', 'bias', 'gradWeight', 'gradBias')
 	end
-end
-
-function layer:getModule()
-	return self.cell
 end
 
 function layer:parameters()
@@ -80,21 +73,14 @@ function layer:updateOutput(input)
 
 	self.state{[0] = self.initState}
 	self.inputs = {}
-	self.tmax = 0 -- we will keep track of max sequence length encountered in the data for efficiency
-	local can_skip = false
+
 	for t = 1, self.rLength do
-		if torch.sum(input[t]) == 0 then
-			can_skip = true
-		end
-		if not (self.skipFlag and can_skip) then
-			self.inputs[t] = {input[t], unpack(self.state[t-1])}
-			local out = self.slices[t]:forward(self.inputs[t])
-			self.output[t] = out[self.numState+1]
-			self.state[t] = {}
-			for i = 1, self.numState do
-				table.insert(self.state[t], out[i])
-			end
-			self.tmax = t
+		self.inputs[t] = {input[t], unpack(self.state[t-1])}
+		local out = self.slices[t]:forward(self.inputs[t])
+		self.output[t] = out[self.numState+1]
+		self.state[t] = {}
+		for i = 1, self.numState do
+			table.insert(self.state[t], out[i])
 		end
 	end
 
@@ -102,8 +88,8 @@ function layer:updateOutput(input)
 end
 
 function layer:updateGradInput(input, gradOutput)
-	local dState = {[self.tmax] = self.initState}
-	for t = self.tmax, 1, -1 do
+	local dState = {[self.rLength] = self.initState}
+	for t = self.rLength, 1, -1 do
 		local dout = {}
 		for k = 1, #dState[t] do
 			table.insert(dout, dState[t][k])
@@ -116,11 +102,5 @@ function layer:updateGradInput(input, gradOutput)
 			table.insert(dState[t-1], dInputs[k])
 		end
 	end
-	if self.tmax < self.rLength then
-		for t = self.tmax + 1, self.rLength do
-			self.gradInput[t]:zero()
-		end
-	end
-
 	return self.gradInput
 end

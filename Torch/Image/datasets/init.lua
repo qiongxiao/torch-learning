@@ -1,6 +1,6 @@
---[[ code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/init.lua
+--[[
 --
---  ImageNet and CIFAR-10 datasets
+--  code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/init.lua
 --
 --]]
 

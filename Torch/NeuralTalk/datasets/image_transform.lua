@@ -1,8 +1,6 @@
 --[[
--- code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua
 --
---  Copyright (c) 2016, Facebook, Inc.
---  All rights reserved.
+--  code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua
 --
 --  Image transforms for data augmentation and input normalization
 --

@@ -1,7 +1,8 @@
 --[[
+--
 -- some code from "https://raw.githubusercontent.com/facebook/fb.resnet.torch/master/datasets/imagenet.lua"
 --
---  MsCoco dataset loader
+--  mscoco dataset loader
 --
 --]]
 

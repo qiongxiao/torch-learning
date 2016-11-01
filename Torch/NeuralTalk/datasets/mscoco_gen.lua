@@ -1,5 +1,7 @@
 --[[
--- code from "https://github.com/karpathy/neuraltalk2/blob/master/coco/coco_preprocess.ipynb"
+--
+--  code from "https://github.com/karpathy/neuraltalk2/blob/master/coco/coco_preprocess.ipynb"
+--
 --]]
 
 local utils = require 'utils/utils'

@@ -13,7 +13,6 @@ function layer:__init(inputSize, outputSize, hidenStateSize, rnnLength, rnnDepth
 	parent.__init(self)
 	self.inputSize = inputSize
 	self.outputSize = outputSize
-	self.hidenStateSize = hidenStateSize
 	self.rnnLength = rnnLength
 	self.rnnDepth = rnnDepth
 	skipFlag = skipFlag or false

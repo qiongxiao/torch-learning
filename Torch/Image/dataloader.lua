@@ -104,6 +104,7 @@ function DataLoader:run()
 					target = sample.target
 				}
 			else
+				local nCrops = self.nCrops
 				local sz = indices:size(1)
 				local batch, imageSize
 				local target = torch.IntTensor(sz)

@@ -43,6 +43,12 @@ function layer:evaluate()
 	for k,v in pairs(self.slices) do v:evaluate() end
 end
 
+--[[
+	input:
+		torch.Tensor of size "rLength * batchsize * 1"
+	output:
+		torch.Tensor of size "rLenght * batchsize * outputSize"
+--]]
 function layer:updateOutput(input)
 	if self.slices == nil then self:createSlices() end -- lazily create clones on first forward pass
 	assert(input:size(1) == self.rLength)

@@ -62,7 +62,7 @@ function layer:updateOutput(input)
 	assert(seq:size(1) == self.seqLength)
 
 	local batch_size = seq:size(2)
-	self.rLookupTableInput = tortch.cat({torch.Tensor(1, batch_size):zero():add(self.vocabSize+1), seq}, 1)
+	self.rLookupTableInput = tortch.cat({torch.Tensor(1, batch_size):fill(self.vocabSize+1), seq}, 1)
 	local seqEncoded = self.rLookupTable:forward(seqWithStart)
 	self.lstmInput = torch.cat({imgs:view(1, batch_size, self.inputEncodingSize), seqEncoded}, 1)
 	self.output = self.lstm:forward(lstmInput)

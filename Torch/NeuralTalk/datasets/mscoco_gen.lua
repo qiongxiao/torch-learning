@@ -2,7 +2,7 @@
 -- code from "https://github.com/karpathy/neuraltalk2/blob/master/coco/coco_preprocess.ipynb"
 --]]
 
-local cjson = require 'cjson'
+local utils = require 'utils/utils'
 local sys = require 'sys'
 local ffi = require 'ffi'
 local paths = require 'paths'
@@ -11,18 +11,11 @@ local URL = 'http://msvocds.blob.core.windows.net/annotations-1-0-3/captions_tra
 
 local M = {}
 
-local function readJson(path)
-  local f = io.open(path, 'r')
-  local s = f:read('*all')
-  f:close()
-  return cjson.decode(s)
-end
-
 local function mergeAnnot(path)
 	local itoa = {}
 	local out = {}
 
-	local data = readJson(path)
+	local data = utils.readJson(path)
 	local annots = data['annotations']
 	local imgs = data['images']
 	for _, v in pairs(annots) do
@@ -34,11 +27,11 @@ local function mergeAnnot(path)
 	end
 	for i, img in pairs(imgs) do
 		local imgid = img['id']
-		local jimg = {}
-		jimg['file_path'] = img['file_name']
-		jimg['id'] = imgid
-		jimg['captions'] = itoa[imgid]
-		table.insert(out, jimg)
+		local imgNew = {}
+		imgNew['file_path'] = img['file_name']
+		imgNew['id'] = imgid
+		imgNew['captions'] = itoa[imgid]
+		table.insert(out, imgNew)
 	end
 	return out
 end
@@ -115,6 +108,7 @@ local function buildVocab(data)
 			end
 		end
 	end
+	-- number the vocabulary according to the order of counts from large to small
 	local vocab = {}
 	for k, v in spairs(counts, fs) do
 		local word = {}

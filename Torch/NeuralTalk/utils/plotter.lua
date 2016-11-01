@@ -1,24 +1,11 @@
-local cjson = require 'cjson'
+--[[
+--
+--  code from https://github.com/joeyhng/trainplot
+--
+--]]
+local utils = require 'utils/utils'
 
--- code from https://github.com/jcjohnson/torch-rnn
-local utils = {}
-
-function utils.read_json(path)
-  local f = io.open(path, 'r')
-  local s = f:read('*all')
-  f:close()
-  return cjson.decode(s)
-end
-
-function utils.write_json(path, obj)
-	local f = io.open(path, 'w') 
-	f:write(cjson.encode(obj))
-	f:close()
-end
-
-require 'torch'
-M = {}
--- code from https://github.com/joeyhng/trainplot
+local M = {}
 local Plotter = torch.class('Plotter', M)
 
 function Plotter:__init(opt)
@@ -32,7 +19,7 @@ function Plotter:__init(opt)
 	end
 	if opt.resume ~= 'none' then
 		if paths.filep(self.checkpoint_path) then
-			self.figures = utils.read_json(self.checkpoint_path)
+			self.figures = utils.readJson(self.checkpoint_path)
 			print('<plot init> fininsh loading plot')
 		else
 			error(string.format('"%s" does not existed', self.checkpoint_path))
@@ -68,11 +55,11 @@ function Plotter:add(fig_id, plot_id, iter, data)
 	table.insert(plot['x'], iter)
 	table.insert(plot['y'], data)
 
-	utils.write_json(self.path, self.figures)
+	utils.writeJson(self.path, self.figures)
 end
 
 function Plotter:save()
-	utils.write_json(self.checkpoint_path, self.figures)
+	utils.writeJson(self.checkpoint_path, self.figures)
 end
 
 return M.Plotter

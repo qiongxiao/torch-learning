@@ -1,3 +1,8 @@
+--[[
+--
+--  The lenet model definition
+--
+--]]
 local nn = require 'nn'
 require 'cunn'
 

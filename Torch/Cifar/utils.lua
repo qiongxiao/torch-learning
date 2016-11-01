@@ -79,11 +79,6 @@ function Plotter:add(fig_id, plot_id, iter, data)
 	table.insert(plot['y'], data)
 
 	utils.write_json(self.path, self.figures)
-	--[[
-	local file = io.open(self.path, 'w')
-	file:write(cjson.encode(self.figures))
-	file:close()
-	--]]
 end
 
 function Plotter:checkpoint()

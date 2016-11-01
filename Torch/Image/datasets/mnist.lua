@@ -1,3 +1,8 @@
+--[[
+--
+--  mnist dataset loader
+--
+--]]
 local t = require 'datasets/image_transform'
 
 local M = {}

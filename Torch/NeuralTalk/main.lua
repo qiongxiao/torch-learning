@@ -1,11 +1,6 @@
---[[ code from https://github.com/facebook/fb.resnet.torch/blob/master/main.lua
+--[[
 --
---  Copyright (c) 2016, Facebook, Inc.
---  All rights reserved.
---
---  This source code is licensed under the BSD-style license found in the
---  LICENSE file in the root directory of this source tree. An additional grant
---  of patent rights can be found in the PATENTS file in the same directory.
+--  some code from https://github.com/facebook/fb.resnet.torch/blob/master/main.lua
 --
 --]]
 require 'torch'
@@ -17,8 +12,8 @@ local opts = require 'opts'
 local DataLoader = require 'dataloader'
 local models = require 'models/init'
 local Trainer = require 'trainer'
-local checkpoints = require 'checkpoints'
-local Plotter = require 'plotter'
+local checkpoints = require 'utils/checkpoints'
+local Plotter = require 'utils/plotter'
 
 torch.setdefaulttensortype('torch.FloatTensor')
 

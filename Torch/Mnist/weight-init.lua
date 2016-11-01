@@ -1,3 +1,4 @@
+-- code from 'https://github.com/e-lab/torch-toolbox'
 --
 -- Different weight initialization methods
 --

@@ -1,3 +1,8 @@
+--[[
+--
+--  The vggnet model definition
+--
+--]]
 local nn = require 'nn'
 require 'cunn'
 

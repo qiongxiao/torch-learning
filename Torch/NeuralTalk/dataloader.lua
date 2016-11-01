@@ -32,6 +32,7 @@ end
 function DataLoader:__init(dataset, opt, split)
 	self.nThreads = opt.nThreads
 	self.seqPerImg = opt.seqPerImg
+	self.seqLength = opt.seqLength
 	self.nCrops = (split ~= 'train' and opt.tenCrop) and 10 or 1
 	self.batchsize = math.floor(opt.batchsize / self.nCrops)
 
@@ -74,14 +75,19 @@ function DataLoader:run()
 	local idx, sample = 1, nil
 
 	local function makebatches()
+		local nCrops = self.nCrops
+		local seqPerImg, seqLength = self.seqPerImg, self.seqLength
+		
 		if idx <= size then
 			-- choose indices inside batch
 			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1)):long()
 			local sz = indices:size(1)
 			local batch, imageSize
-			local target = torch.IntTensor(sz)
+			local target = torch.IntTensor(sz * seqPerImg, seqLength)
 			for i, idx in ipairs(indices:totable()) do
 				local sample = self.dataset:get(idx)
+
+				-- fetch image
 				local input = self.preprocess(sample.input)
 				if not batch then
 					imageSize = input:size():totable()
@@ -89,13 +95,32 @@ function DataLoader:run()
 					batch = torch.FloatTensor(sz, nCrops, table.unpack(imageSize))
 				end
 				batch[i]:copy(input)
-				target[i] = sample.target
+
+				-- fetch sequences
+				local seq
+				local nSeq = sampe.target:size(1)
+				if nSeq < seqPerImg then
+					-- we need to subsample (with replacement)
+					seq = torch.LongTensor(seqPerImg, seqLength)
+					for q = 1, seqPerImg do
+						local seqIdx = torch.random(1, nSeq)
+						seq[{{q, q}}] = sample.target[{{seqIndex, seqIdx}}]
+					end
+				elseif nSeq > seqPerImg then
+					local seqIndex = torch.random(1, nSeq - seqPerImg + 1)
+					seq = sample.target:narrow(1, seqIndex, seqPerImg)
+				else
+					seq = sample.target
+				end
+
+				local startIdx = (i - 1) * seqPerImg
+				target[{{startIdx+1, startIdx+seqPerImg}}] = seq
 			end
 			collectgarbage()
 			idx = idx + batchsize
 			return {
 				input = batch:view(sz * nCrops, table.unpack(imageSize)),
-				target = target,
+				target = target:transpose(1,2):contiguous(),
 			}
 		else
 			return nil
@@ -106,12 +131,14 @@ function DataLoader:run()
 		while idx <= size and threads:acceptsjob() do
 			local indices = perm:narrow(1, idx, math.min(batchSize, size - idx + 1))
 			threads:addjob(
-				function(indices, nCrops)
+				function(indices, nCrops, seqPerImg, seqLength)
 					local sz = indices:size(1)
 					local batch, imageSize
 					local target = torch.IntTensor(sz)
 					for i, idx in ipairs(indices:totable()) do
 						local sample = _G.dataset:get(idx)
+
+						-- fetch image
 						local input = _G.preprocess(sample.input)
 						if not batch then
 							imageSize = input:size():totable()
@@ -119,24 +146,44 @@ function DataLoader:run()
 							batch = torch.FloatTensor(sz, nCrops, table.unpack(imageSize))
 						end
 						batch[i]:copy(input)
-						target[i] = sample.target
+
+						-- fetch sequences
+						local seq
+						local nSeq = sampe.target:size(1)
+						if nSeq < seqPerImg then
+							-- we need to subsample (with replacement)
+							seq = torch.LongTensor(seqPerImg, seqLength)
+							for q = 1, seqPerImg do
+								local seqIdx = torch.random(1, nSeq)
+								seq[{{q, q}}] = sample.target[{{seqIndex, seqIdx}}]
+							end
+						elseif nSeq > seqPerImg then
+							local seqIndex = torch.random(1, nSeq - seqPerImg + 1)
+							seq = sample.target:narrow(1, seqIndex, seqPerImg)
+						else
+							seq = sample.target
+						end
+
+						local startIdx = (i - 1) * seqPerImg
+						target[{{startIdx+1, startIdx+seqPerImg}}] = seq
 					end
 					collectgarbage()
 					return {
 						input = batch:view(sz * nCrops, table.unpack(imageSize)),
-						target = target,
+						target = target:transpose(1,2):contiguous(),
 					}
 				end,
 				function(_sample_)
 					sample = _sample_
 				end,
 				indices,
-				self.nCrops
+				self.nCrops,
+				self.seqPerImg,
+				self.seqLength
 			)
 			idx = idx + batchSize
 		end
 	end
-
 
 	local n = 0
 	local function loop()
@@ -156,7 +203,7 @@ function DataLoader:run()
 				threads:synchronize()
 			end
 			enqueue()
-			n = n + 1			
+			n = n + 1
 		end
 		return n, sample
 	end

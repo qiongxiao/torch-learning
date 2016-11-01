@@ -131,3 +131,5 @@ function ImagenetDataset:preprocess()
 		error('invalid cnn_type: ' .. self.opt.cnn_type)
 	end
 end
+
+return M.MscocoDataset

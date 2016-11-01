@@ -110,7 +110,8 @@ local function buildVocab(data)
 			end
 		end
 	end
-	-- number the vocabulary according to the order of counts from large to small
+	-- number the vocabulary from 1 to #vocab
+	-- according to the order of counts from large to small
 	local vocab = {}
 	for k, v in spairs(counts, fs) do
 		local word = {}

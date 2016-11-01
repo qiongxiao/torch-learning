@@ -26,7 +26,7 @@ function M.create(config)
 	end
 	local imageInfo = torch.load(cachePath)
 	local Dataset = require('datasets/' .. config.opt.dataset)
-	return Dataset(imageInfo, opt, config.split)
+	return Dataset(imageInfo, config.opt, config.split)
 end
 
 return M

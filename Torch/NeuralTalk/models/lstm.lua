@@ -112,7 +112,7 @@ function layer:updateGradInput(input, gradOutput)
 	end
 	if self.tmax < self.rLength then
 		for t = self.tmax + 1, self.rLength do
-			self.gradInput[t] = torch.Tensor()
+			self.gradInput[t]:zero()
 		end
 	end
 

@@ -9,15 +9,15 @@ local lstmCell = require 'models.lstmCell'
 
 local layer, parent = torch.class('nn.LSTM', 'nn.Module')
 
-function layer:__init(inputSize, outputSize, hidenStateSize, rnnLength, rnnDepth, dropout, skipFlag)
+function layer:__init(inputSize, outputSize, hidenStateSize, rLength, rDepth, dropout, skipFlag)
 	parent.__init(self)
 	self.inputSize = inputSize
 	self.outputSize = outputSize
-	self.rnnLength = rnnLength
-	self.rnnDepth = rnnDepth
+	self.rLength = rLength
+	self.rDepth = rDepth
 	skipFlag = skipFlag or false
 	self.skipFlag = skipFlag
-	self.cell = lstmCell(inputSize, outputSize, hidenStateSize, rnnDepth, dropout)
+	self.cell = lstmCell(inputSize, outputSize, hidenStateSize, rDepth, dropout)
 	self:_createInitState(1) -- will be lazily resized later during forward passes
 end
 
@@ -25,7 +25,7 @@ function layer:_createInitState(batchsize)
 	assert(batchsize ~= nil, 'batch size for lstm must be provided')
 	-- construct the initial state for the LSTM
 	if not self.initState then self.initState = {} end -- lazy init
-	for h = 1, self.rnnDepth * 2 do
+	for h = 1, self.rDepth * 2 do
 		-- note, the init state MUST be zeros because we are using initState to init grads in backward call too
 		if self.initState[h] then
 			if self.initState[h]:size(1) ~= batchsize then
@@ -40,7 +40,7 @@ end
 
 function layer:createSlices()
 	self.slices = { self.cell }
-	for t = 2, self.rnnLength do
+	for t = 2, self.rLength do
 		self.slices[t] = self.cell:clone('weight', 'bias', 'gradWeight', 'gradBias')
 	end
 end
@@ -56,16 +56,16 @@ end
 
 function layer:updateOutput(input)
 	if self.slices == nil then self:createSlices() end -- lazily create clones on first forward pass
-	assert(input:size(1) == self.rnnLength)
+	assert(input:size(1) == self.rLength)
 	local batchsize = input:size(2)
-	self.output:resize(rnnLength, batchsize, self.outputSize)
+	self.output:resize(rLength, batchsize, self.outputSize)
 
 	self._createInitState(batchsize)
 
 	self.state{[0] = self.initState}
 	self.inputs = {}
 	self.tmax = 0 -- we will keep track of max sequence length encountered in the data for efficiency
-	for t = 1, self.rnnLength do
+	for t = 1, self.rLength do
 		local can_skip = false
 		local it = input[t]:clone()
 		if torch.sum(it) == 0 then
@@ -102,8 +102,8 @@ function layer:updateGradInput(input, gradOutput)
 			table.insert(dState[t-1], dInputs[k])
 		end
 	end
-	if self.tmax < self.rnnLength then
-		for t = self.tmax + 1, self.rnnLength do
+	if self.tmax < self.rLength then
+		for t = self.tmax + 1, self.rLength do
 			dInput[t] = torch.Tensor()
 		end
 	end

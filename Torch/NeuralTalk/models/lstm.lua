@@ -54,6 +54,16 @@ function layer:parameters()
 	-- ################ ?? destroy weight sharing?? ################
 end
 
+function layer:training()
+	if self.slices == nil then self:createSlices() end -- create these lazily if needed
+	for k,v in pairs(self.slices) do v:training() end
+end
+
+function layer:evaluate()
+	if self.slices == nil then self:createSlices() end -- create these lazily if needed
+	for k,v in pairs(self.slices) do v:evaluate() end
+end
+
 function layer:updateOutput(input)
 	if self.slices == nil then self:createSlices() end -- lazily create clones on first forward pass
 	assert(input:size(1) == self.rLength)
@@ -65,10 +75,9 @@ function layer:updateOutput(input)
 	self.state{[0] = self.initState}
 	self.inputs = {}
 	self.tmax = 0 -- we will keep track of max sequence length encountered in the data for efficiency
+	local can_skip = false
 	for t = 1, self.rLength do
-		local can_skip = false
-		local it = input[t]:clone()
-		if torch.sum(it) == 0 then
+		if torch.sum(input[t]) == 0 then
 			can_skip = true
 		end
 		if not (self.skipFlag and can_skip) then
@@ -88,7 +97,6 @@ end
 
 function layer:updateGradInput(input, gradOutput)
 	local dState = {[self.tmax] = self.initState}
-	local dInput = {}
 	for t = self.tmax, 1, -1 do
 		local dout = {}
 		for k = 1, #dState[t] do
@@ -96,7 +104,7 @@ function layer:updateGradInput(input, gradOutput)
 		end
 		table.insert(dout, gradOutput[t])
 		local dInputs = self.slices[t]:backward(self.inputs[t], dout)
-		dInput[t] = dInputs[1]
+		self.gradInput[t] = dInputs[1]
 		dState[t-1] = {}
 		for k = 2, self.numState+1 do
 			table.insert(dState[t-1], dInputs[k])
@@ -104,9 +112,9 @@ function layer:updateGradInput(input, gradOutput)
 	end
 	if self.tmax < self.rLength then
 		for t = self.tmax + 1, self.rLength do
-			dInput[t] = torch.Tensor()
+			self.gradInput[t] = torch.Tensor()
 		end
 	end
-	self.gradInput = dInput
+
 	return self.gradInput
 end

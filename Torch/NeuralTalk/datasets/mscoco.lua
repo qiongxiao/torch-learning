@@ -23,11 +23,14 @@ local function rebuiltCaption(data, vocab, opt)
 		end
 	end
 	data.imageCaptions = data.imageCaptions:clamp(1, goodWordCount+1):narrow(2, 1, seqLength)
+	return goodWordCount+1
 end
 
 function MscocoDataset:__init(imageInfo, opt, split)
 	self.imageInfo = imageInfo[split]
-	rebuiltCaption(self.imageInfo, imageInfo['vocab'], opt)
+	self.vocab = imageInfo.vocab
+	self.devocab = imageInfo.devocab
+	self.vocabSize = rebuiltCaption(self.imageInfo, imageInfo['vocab'], opt)
 	self.opt = opt
 	self.split = split
 	self.dir = paths.concat(opt.data, split .. "2014")

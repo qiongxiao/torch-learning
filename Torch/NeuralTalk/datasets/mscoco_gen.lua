@@ -116,12 +116,18 @@ local function buildVocab(data)
 	for k, v in spairs(counts, fs) do
 		local word = {}
 		word['id'] = #vocab + 1
-		word['count'] = counts[k]
+		word['count'] = v
 		vocab[k] = word
 	end
 	local num = #vocab + 1
 	vocab['UNK'] = {id=num, count=0}
-	return vocab, maxLength
+
+	local devocab = {}
+	for k, v in pairs(vocab) do
+		devocab[v['id']] = k
+	end
+
+	return vocab, devocab, maxLength
 end
 
 local function convertCaption(data, vocab, maxLength)
@@ -175,13 +181,14 @@ function M.exec(opt, cacheFile)
 
 	local trainImagePath = convertPath(train)
 	local valImagePath = convertPath(val)
-	local vocab, maxLength = buildVocab(train)
+	local vocab, devocab, maxLength = buildVocab(train)
 	local trainImageCaptions, trainImageCapIdx = convertCaption(train, vocab, maxLength)
 	local valImageCaptions, valImageCapIdx = convertCaption(val, vocab, maxLength)
 
 	local info = {
 		basedir = opt.data,
 		vocab = vocab,
+		devocab = devocab,
 		train = {
 			imagePath = trainImagePath,
 			imageCaptions = trainImageCaptions,

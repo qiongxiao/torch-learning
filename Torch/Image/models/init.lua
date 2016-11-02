@@ -21,7 +21,7 @@ function M.setup(opt, checkpoint)
 		model = torch.load(modelPath):cuda()
 	elseif opt.retrain ~= 'none' then
 		assert(paths.filep(opt.retrain), 'File not found: ' .. opt.retrain)
-		print('<model init> Loading model from file: ' .. opt.retrain)
+		print('<model init> => Loading model from file: ' .. opt.retrain)
 		model = torch.load(opt.retrain):cuda()
 	else
 		print('<model init> => Creating model from file: models/' .. opt.netType .. '.lua')

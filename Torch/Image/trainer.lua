@@ -70,8 +70,11 @@ function Trainer:train(epoch, dataloader, plotter)
 		self.model:zeroGradParameters()
 		self.criterion:backward(self.model.output, self.target)
 		self.model:backward(self.input, self.criterion.gradInput)
-
-		optim.sgd(feval, self.params, self.optimConfig)
+		
+		if self.optimizer == 'sgd' then
+			optim.sgd(feval, self.params, self.optimConfig)
+		else
+			optim.adam(feval, self.params, self.optimConfig)
 
 		local top1, top5 = self:computeScore(output, sample.target, 1)
 		top1Sum = top1Sum + top1*batchsize

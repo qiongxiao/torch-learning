@@ -120,7 +120,7 @@ function DataLoader:run()
 			idx = idx + batchsize
 			return {
 				input = batch:view(sz * nCrops, table.unpack(imageSize)),
-				target = target:transpose(1,2):contiguous(),
+				target = target,
 			}
 		else
 			return nil
@@ -170,7 +170,7 @@ function DataLoader:run()
 					collectgarbage()
 					return {
 						input = batch:view(sz * nCrops, table.unpack(imageSize)),
-						target = target:transpose(1,2):contiguous(),
+						target = target,
 					}
 				end,
 				function(_sample_)

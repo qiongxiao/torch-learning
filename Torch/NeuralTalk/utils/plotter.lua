@@ -3,7 +3,7 @@
 --  code from https://github.com/joeyhng/trainplot
 --
 --]]
-local utils = require 'utils/utils'
+local utils = require 'utils.utils'
 
 local M = {}
 local Plotter = torch.class('Plotter', M)

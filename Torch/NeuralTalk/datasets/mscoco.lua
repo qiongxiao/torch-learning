@@ -87,7 +87,7 @@ local pca = {
 	},
 }
 function ImagenetDataset:preprocess()
-	if self.opt.cnn_type == 'resnet' then
+	if self.opt.cnnType == 'resnet' then
 		if self.split == 'train' then
 			return t.Compose{
 				t.RandomSizedCrop(224),
@@ -97,38 +97,38 @@ function ImagenetDataset:preprocess()
 					saturation = 0.4,
 				}),
 				t.Lighting(0.1, pca.eigval, pca.eigvec),
-				t.ColorNormalize(meanstd, self.opt.cnn_type),
+				t.ColorNormalize(meanstd, self.opt.cnnType),
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' then
 			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
 			return t.Compose{
 				t.Scale(256),
-				t.ColorNormalize(meanstd, self.opt.cnn_type),
+				t.ColorNormalize(meanstd, self.opt.cnnType),
 				Crop(224),
 			}
 		else
 			error('invalid split: ' .. self.split)
 		end
-	elseif self.opt.cnn_type == 'vgg' then
+	elseif self.opt.cnnType == 'vgg' then
 		if self.split == 'train' then
 			return t.Compose{
 				t.RandomSizedCrop(224),
-				t.ColorNormalize(meanstd, self.opt.cnn_type),
+				t.ColorNormalize(meanstd, self.opt.cnnType),
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' then
 			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
 			return t.Compose{
 				t.Scale(256),
-				t.ColorNormalize(meanstd, self.opt.cnn_type),
+				t.ColorNormalize(meanstd, self.opt.cnnType),
 				Crop(224),
 			}
 		else
 			error('invalid split: ' .. self.split)
 		end		
 	else
-		error('invalid cnn_type: ' .. self.opt.cnn_type)
+		error('invalid cnn_type: ' .. self.opt.cnnType)
 	end
 end
 

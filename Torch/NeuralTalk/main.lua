@@ -10,10 +10,10 @@ require 'nn'
 
 local opts = require 'opts'
 local DataLoader = require 'dataloader'
-local models = require 'models/init'
+local models = require 'models.init'
 local Trainer = require 'trainer'
-local checkpoints = require 'utils/checkpoints'
-local Plotter = require 'utils/plotter'
+local checkpoints = require 'utils.checkpoints'
+local Plotter = require 'utils.plotter'
 
 torch.setdefaulttensortype('torch.FloatTensor')
 

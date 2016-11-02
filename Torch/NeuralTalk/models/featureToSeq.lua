@@ -4,7 +4,7 @@
 --
 --]]
 
-require 'nn'
+local nn = require 'nn'
 require 'models.lstm'
 local lstmCell = require 'models.lstmCell'
 
@@ -14,15 +14,15 @@ function layer:__init(opt, vocabSize)
 	parent.__init(self)
 
 	self.vocabSize = vocabSize
-	self.inputEncodingSize = opt.inputEncodingSize
+	self.encodingSize = opt.encodingSize
 	self.rDepth = opt.rDepth
 	self.seqLength = opt.seqLength
 	self.hiddenStateSize = opt.hiddenStateSize
 
-	self.lstmCell = lstmCell(self.inputEncodingSize, self.vocabSize+1, self.hiddenStateSize, self.rDepth, opt.dropout)
+	self.lstmCell = lstmCell(self.encodingSize, self.vocabSize+1, self.hiddenStateSize, self.rDepth, opt.lstmDropout)
 	self.lstm = nn.LSTM(self.lstmCell, self.seqLength+2, self.rDepth)
 
-	self.lookupTable = nn.LookupTable(self.vocabSize+1, self.inputEncodingSize)
+	self.lookupTable = nn.LookupTable(self.vocabSize+1, self.encodingSize)
 
 	self.inferenceMax = opt.inferenceMax
 	self.temperature = opt.temperature
@@ -77,7 +77,7 @@ end
 
 --[[
 	input is a table of:
-		1.	torch.Tensor of size "batchsize * inputEncodingSize"
+		1.	torch.Tensor of size "batchsize * encodingSize"
 		2.	torch.LongTensor of size "batchsize * seqLength", elements 1..M
 			where M = vocabSize
 	output:
@@ -87,17 +87,17 @@ function layer:updateOutput(input)
 	local imgs = input[1]
 	local seq = input[2]
 
-	assert(imgs:size(2) == self.inputEncodingSize)
+	assert(imgs:size(2) == self.encodingSize)
 	assert(seq:size(2) == self.seqLength)
 
 	local batchsize = seq:size(1)
 	self.lookupTableInput = torch.cat({torch.Tensor(batchsize, 1):fill(self.vocabSize+1), seq})
 	local seqEncoded = self.lookupTable:forward(lookupTableInput)
-	-- seqEncoded's size is "batchsize * (seqLength+1) * inputEncodingSize"
-	self.lstmInput = torch.cat({imgs:view(batchsize, 1, self.inputEncodingSize), seqEncoded}, 2)
-	-- lstmInput's size is "batchsize * (seqLength+2) * inputEncodingSize"
+	-- seqEncoded's size is "batchsize * (seqLength+1) * encodingSize"
+	self.lstmInput = torch.cat({imgs:view(batchsize, 1, self.encodingSize), seqEncoded}, 2)
+	-- lstmInput's size is "batchsize * (seqLength+2) * encodingSize"
 	self.lstmInput = self.lstmInput:transpose(1, 2):contiguous()
-	-- lstmInput's size is "(seqLength+2) * batchsize * inputEncodingSize"
+	-- lstmInput's size is "(seqLength+2) * batchsize * encodingSize"
 	self.output = self.lstm:forward(self.lstmInput)
 	self.output = self.output:transpose(1, 2):contiguous()
 	return self.output
@@ -114,7 +114,7 @@ end
 
 --[[
 	input:
-		torch.Tensor of size "batchsize * inputEncodingSize"
+		torch.Tensor of size "batchsize * encodingSize"
 	output:
 		torch.Tensor of size "batchsize * seqLength"
 --]]

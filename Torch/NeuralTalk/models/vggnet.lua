@@ -19,15 +19,10 @@ local function createModel(opt)
 			:add(ReLU(true))
 	end
 
-	local size, nClasses
-	if opt.dataset == 'cifar10' opt.dataset == 'cifar100' then
-		size = 1
-		nClasses = (opt.dataset == 'cifar10') and 10 or 100
-	elseif opt.dataset == 'imagenet' then
-		size = 7
-		nClasses = 1000
-	elseif opt.dataset == 'mnist' then
-		error('invalid combination of mnist dataset and VGG net')
+	local nClasses = opt.encodingSize
+	local size
+	if opt.dataset == 'mscoco'
+		size = 8 --256/2^5
 	else
 		error('invalid dataset: ' .. opt.dataset)
 	end
@@ -36,68 +31,68 @@ local function createModel(opt)
 
 	model:add(ConvBNReLU(3, 64))
 	if opt.conv_dropout > 0 then
-		model:add(nn.Dropout(opt.convDropout))
+		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(64, 64))
 	model:add(Max(2, 2, 2, 2, 0, 0):ceil())
 
 	-- stage CONV 2
 	model:add(ConvBNReLU(64, 128))
-	if opt.convDropout > 0 then
-		model:add(nn.Dropout(opt.convDropout))
+	if opt.cnnCONVdropout > 0 then
+		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(128, 128))
 	model:add(Max(2, 2, 2, 2, 0, 0):ceil())
 
 	-- stage CONV 3
 	model:add(ConvBNReLU(128, 256))
-	if opt.convDropout > 0 then
-		model:add(nn.Dropout(opt.convDropout))
+	if opt.cnnCONVdropout > 0 then
+		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(256, 256))
-	if opt.convDropout > 0 then
-		model:add(nn.Dropout(opt.convDropout))
+	if opt.cnnCONVdropout > 0 then
+		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(256, 256))
 	model:add(Max(2, 2, 2, 2, 0, 0):ceil())
 
 	-- stage CONV 4
 	model:add(ConvBNReLU(256, 512))
-	if opt.convDropout > 0 then
-		model:add(nn.Dropout(opt.convDropout))
+	if opt.cnnCONVdropout > 0 then
+		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(512, 512))
-	if opt.convDropout > 0 then
-		model:add(nn.Dropout(opt.convDropout))
+	if opt.cnnCONVdropout > 0 then
+		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(512, 512))
 	model:add(Max(2, 2, 2, 2, 0, 0):ceil())
 
 	-- stage CONV 5
 	model:add(ConvBNReLU(512, 512))
-	if opt.convDropout > 0 then
-		model:add(nn.Dropout(opt.convDropout))
+	if opt.cnnCONVdropout > 0 then
+		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(512, 512))
-	if opt.convDropout > 0 then
-		model:add(nn.Dropout(opt.convDropout))
+	if opt.cnnCONVdropout > 0 then
+		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(512, 512))
 	model:add(Max(2, 2, 2, 2, 0, 0):ceil())
 
 	model:add(nn.View(512 * size * size))
 
-	if opt.dropout > 0 then
-		model:add(nn.Dropout(opt.dropout))
+	if opt.cnnFCdropout > 0 then
+		model:add(nn.Dropout(opt.cnnFCdropout))
 	end
-	model:add(nn.Linear(512, 512))
-	model:add(nn.BatchNormalization(512))
+	model:add(nn.Linear(512 * size * size, 4096))
+	model:add(nn.BatchNormalization(4096))
 	model:add(nn.ReLU())
 
-	if opt.dropout > 0 then
-		model:add(nn.Dropout(opt.dropout))
+	if opt.cnnFCdropout > 0 then
+		model:add(nn.Dropout(opt.cnnFCdropout))
 	end
-	model:add(nn.Linear(512, nClasses))
+	model:add(nn.Linear(4096, nClasses))
 
 	local function ConvInit(name)
 		for k,v in pairs(model:findModules(name)) do

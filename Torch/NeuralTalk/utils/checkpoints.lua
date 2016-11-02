@@ -34,7 +34,7 @@ function checkpoint.loadLatestInfo(opt)
 		error('<resuming> checkpoint' .. latestPath .. 'does not exist')
 	end
 
-	print('<resuming> Loading checkpoint ' .. latestPath)
+	print('<resuming> => Loading checkpoint ' .. latestPath)
 	local latest_info = torch.load(latestPath)
 	local optimState = torch.load(paths.concat(opt.resume, latest_info.optimFile))
 
@@ -42,22 +42,23 @@ function checkpoint.loadLatestInfo(opt)
 end
 
 function checkpoint.saveModel(epoch, model, optimState, isBestModel, opt)
-	-- don't save the DataParallelTable for easier loading on other machines
-	if torch.type(model) == 'nn.DataParallelTable' then
-		model = model:get(1)
-	end
-
 	-- create a clean copy on the CPU without modifying the original network
-	model = deepCopy(model):float():clearState()
+	cnn = deepCopy(model.get(1)):float():clearState()
+	feature2seq = deepCopy(model.get(3)):float():clearState()
 
-	local modelFile = 'model_' .. epoch .. '.t7'
+	local cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
+	local seqModelFile = 'model_seq' .. epoch .. '.t7'
 	local optimFile = 'optimState_' .. epoch .. '.t7'
 
-	torch.save(paths.concat(opt.save, modelFile), model)
+	torch.save(paths.concat(opt.save, cnnModelFile), cnn)
+	torch.save(paths.concat(opt.save, seqModelFile), feature2seq)
+
 	torch.save(paths.concat(opt.save, optimFile), optimState)
+
 	torch.save(paths.concat(opt.save, 'latest_info.t7'), {
 		epoch = epoch,
-		modelFile = modelFile,
+		cnnModelFile = cnnModelFile,
+		seqModelFile = seqModelFile,
 		optimFile = optimFile,
 	})
 

@@ -18,7 +18,7 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 	self.criterion = criterion
 	self.optimizer = opt.optimizer
 	if self.optimizer == 'sgd' then
-		self.optimConfig = {
+		self.optimConfig = optimConfig or {
 			learningRate = opt.lr,
 			learningRateDecay = opt.lr_decay,
 			weigthDecay = opt.weigthDecay,
@@ -27,7 +27,7 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 			dampening = 0.0
 		}
 	elseif self.optimizer == 'adam' then
-		self.optimConfig = {
+		self.optimConfig = optimConfig or {
 			learningRate = opt.lr,
 			learningRateDecay = opt.lr_decay,
 			weigthDecay = opt.weigthDecay

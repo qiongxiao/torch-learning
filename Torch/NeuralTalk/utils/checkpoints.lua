@@ -37,29 +37,33 @@ function checkpoint.loadLatestInfo(opt)
 	print('<resuming> => Loading checkpoint ' .. latestPath)
 	local latest_info = torch.load(latestPath)
 	local optimState = torch.load(paths.concat(opt.resume, latest_info.optimFile))
-
-	return latest_info, optimState
+	local cnnOptimState = torch.load(paths.concat(opt.resume, latest_info.cnnOptimFile))
+	
+	return latest_info, optimState, cnnOptimState
 end
 
-function checkpoint.saveModel(epoch, model, optimState, isBestModel, opt)
+function checkpoint.saveModel(epoch, model, optimState, cnnOptimState, isBestModel, opt)
 	-- create a clean copy on the CPU without modifying the original network
-	cnn = deepCopy(model.get(1)):float():clearState()
-	feature2seq = deepCopy(model.get(3)):float():clearState()
+	cnn = deepCopy(model[1]):float():clearState()
+	feature2seq = deepCopy(model[2]):float():clearState()
 
 	local cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
 	local seqModelFile = 'model_seq' .. epoch .. '.t7'
 	local optimFile = 'optimState_' .. epoch .. '.t7'
+	local cnnOptimFile = 'optimState_cnn_' .. epoch .. '.t7'
 
 	torch.save(paths.concat(opt.save, cnnModelFile), cnn)
 	torch.save(paths.concat(opt.save, seqModelFile), feature2seq)
 
 	torch.save(paths.concat(opt.save, optimFile), optimState)
+	torch.save(paths.concat(opt.save, cnnOptimFile), cnnOptimState)
 
 	torch.save(paths.concat(opt.save, 'latest_info.t7'), {
 		epoch = epoch,
 		cnnModelFile = cnnModelFile,
 		seqModelFile = seqModelFile,
 		optimFile = optimFile,
+		cnnOptimFile = cnnOptimFile,
 	})
 
 	if isBestModel then

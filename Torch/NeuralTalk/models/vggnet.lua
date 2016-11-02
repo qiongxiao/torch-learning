@@ -30,7 +30,7 @@ local function createModel(opt)
 	local model = nn.Sequential()
 
 	model:add(ConvBNReLU(3, 64))
-	if opt.conv_dropout > 0 then
+	if opt.cnnCONVdropout > 0 then
 		model:add(nn.Dropout(opt.cnnCONVdropout))
 	end
 	model:add(ConvBNReLU(64, 64))
@@ -122,11 +122,6 @@ local function createModel(opt)
 		v.bias:zero()
 	end
 	model:cuda()
-	if opt.cudnn == 'deterministic' then
-		model:apply(function(m)
-			if m.setMode then m:setMode(1,1,1) end
-		end)
-	end
 
 	model:get(1).gradInput = nil
 

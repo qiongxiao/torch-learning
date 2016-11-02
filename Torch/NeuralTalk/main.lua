@@ -14,6 +14,7 @@ local models = require 'models.init'
 local Trainer = require 'trainer'
 local checkpoints = require 'utils.checkpoints'
 local Plotter = require 'utils.plotter'
+local utils = require 'utils.utils'
 
 torch.setdefaulttensortype('torch.FloatTensor')
 
@@ -22,62 +23,55 @@ torch.manualSeed(opt.manualSeed)
 cutorch.manualSeedAll(opt.manualSeed)
 
 -- Load previous checkpoint, if it exists
-local checkpoint, optimState = checkpoints.loadLatestInfo(opt)
+local checkpoint, optimState, cnnOptimState = checkpoints.loadLatestInfo(opt)
 local plotter = Plotter(opt)
 
--- Create model
-local model, criterion = models.setup(opt, checkpoint)
-
 -- Data loading
-local trainLoader, valLoader, testLoader = DataLoader.create(opt)
+local trainLoader, valLoader = DataLoader.create(opt)
+
+local vocabSize = trainLoader:getVocabSize()
+
+-- Create model
+local cnn, expander, feature2seq, criterion = models.setup(opt, vocabSize, checkpoint)
+
 
 -- The trainer handles the training loop and evaluation on validation set
-local trainer = Trainer(model, criterion, opt, optimState)
+local trainer = Trainer(cnn, expander, feature2seq, criterion, opt, optimState, cnnOptimState)
 
 if opt.testOnly then
-	if opt.dataset == 'MNIST' then
-		local testTop1, testTop5, _ = trainer:test(0, testLoader)
-		print(string.format('<Testing> * Results top1: %6.3f  top5: %6.3f', testTop1, testTop5))
-	else
-		local top1Err, top5Err = trainer:test(0, valLoader)
-		print(string.format('<Testing> * Results top1: %6.3f  top5: %6.3f', top1Err, top5Err))
-	end
+	local _, out = trainer:test(0, valLoader)
+	utils.writeJson('predict_caption.json', out)
 	return
 end
 
 local startEpoch = checkpoint and checkpoint.epoch + 1 or 1
-local bestTop1 = math.huge
-local bestTop5 = math.huge
+local bestLoss = math.huge
 for epoch = startEpoch, opt.maxEpochs do
 	-- Train for a single epoch
-	local trainTop1, trainTop5, trainLoss
-	trainTop1, trainTop5, trainLoss = trainer:train(epoch, trainLoader, plotter)
+	local finetune = 0
+	if opt.finetune == 1 and epoch >= opt.finetuneAfter then
+		finetune = 1
+	end
+
+	local trainLoss
+	trainLoss = trainer:train(epoch, trainLoader, finetune, plotter)
 
 	-- Run model on validation set
-	local testTop1, testTop5, testLoss = trainer:test(epoch, valLoader)
+	local testLoss = trainer:test(epoch, valLoader)
 
 	local bestModel = false
-	if testTop1 < bestTop1 then
+	if testLoss < bestLoss then
 		bestModel = true
-		bestTop1 = testTop1
-		bestTop5 = testTop5
-		print('<Training> * Best model ', testTop1, testTop5)
+		bestLoss = testLoss
+		print('<Training> * Best model Loss:', testLoss)
 	end
 	
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
-		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, opt)
+		checkpoints.saveModel(epoch, {cnn, feature2seq}, trainer.optimConfig, trainer.cnnOptimConfig, bestModel, opt)
 		plotter:checkpoint()
 	end
 	
 	plotter:add('Train Loss - Epoch', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Train', epoch, trainLoss)
-	plotter:add('top1 error', 'Validation', epoch, testTop1)
 	plotter:add('Loss', 'Validation', epoch, testLoss)
-end
-
-if opt.dataset == 'MNIST' then
-	local testTop1, testTop5, _ = trainer:test(0, testLoader)
-	print(string.format('<Testing> * Finished top1: %6.3f  top5: %6.3f', testTop1, testTop5))
-else
-	print(string.format('<Testing> * Finished top1: %6.3f  top5: %6.3f', bestTop1, bestTop5))
 end

@@ -13,8 +13,8 @@ local optim = require 'optim'
 local M = {}
 local Trainer = torch.class('cnn.Trainer', M)
 
-function Trainer:__init(model, criterion, opt, optimConfig, cnnOptimConfig)
-	self.cnn, self.expander, self.feature2seq = unpack(model)
+function Trainer:__init(cnn, expander, feature2seq, criterion, opt, optimConfig, cnnOptimConfig)
+	self.cnn, self.expander, self.feature2seq = cnn, expander, feature2seq
 	self.criterion = criterion
 
 	self.optimizer = opt.optimizer

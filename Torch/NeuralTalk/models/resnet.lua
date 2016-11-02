@@ -16,7 +16,7 @@ local Max = nn.SpatialMaxPooling
 local SBatchNorm = nn.SpatialBatchNormalization
 
 local function createModel(opt)
-	local depth = opt.depth
+	local depth = opt.resnetDepth
 	local nClasses = opt.encodingSize
 	local shortcutType = opt.shortcutType or 'B'
 	local iChannels
@@ -155,12 +155,6 @@ local function createModel(opt)
 		v.bias:zero()
 	end
 	model:cuda()
-
-	if opt.cudnn == 'deterministic' then
-		model:apply(function(m)
-			if m.setMode then m:setMode(1,1,1) end
-		end)
-	end
 
 	model:get(1).gradInput = nil
 

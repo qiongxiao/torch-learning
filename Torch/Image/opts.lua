@@ -47,7 +47,7 @@ function M.parse(arg)
 	cmd:option('-dropout',          0.5,        'dropout for fully-connected layer')
 	cmd:option('-convDropout',      0.5,        'dropout for convolution layer')
 	------------- Model options -----------------------
-	cmd:option('-netType',          'resnet',   'Options: resnet | preresnet | vggnet | lenet | SmallCNNet')
+	cmd:option('-netType',          'resnet',   'Options: resnet | vggnet | lenet')
 	cmd:option('-depth',            34,         'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')
 	cmd:option('-shortcutType',     '',         'Options: A | B')
 	cmd:option('-retrain',          'none',     'Path to model to retrain with')

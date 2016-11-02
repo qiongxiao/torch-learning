@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is torch7 code for my nn learning.
+This is torch7 code for my study of nn.
 
 Here are some greate code sources:
 
@@ -14,7 +14,7 @@ Here are some greate code sources:
 >
 > [trainplot by joeyhng](https://github.com/joeyhng/trainplot)
 
-## Version
+## Library
 
 ### Mnist
 
@@ -42,3 +42,11 @@ Basic torch code for different datasets using different model types. The code or
 **NOTE**:
 
 	1. please read the options when running
+
+### NeuralTalk
+
+Basic torch code for lstm used for image captioning.
+
+**NOTE**:
+
+	1. still working on it

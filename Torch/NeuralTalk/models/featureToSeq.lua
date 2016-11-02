@@ -8,7 +8,7 @@ require 'nn'
 require 'models.lstm'
 local lstmCell = require 'models.lstmCell'
 
-local layer, parent = torch.class('nn.LanguageModel', 'nn.Module')
+local layer, parent = torch.class('nn.FeatureToSeq', 'nn.Module')
 
 function layer:__init(opt, vocabSize)
 	parent.__init(self)

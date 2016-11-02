@@ -75,6 +75,7 @@ function Trainer:train(epoch, dataloader, plotter)
 			optim.sgd(feval, self.params, self.optimConfig)
 		else
 			optim.adam(feval, self.params, self.optimConfig)
+		end
 
 		local top1, top5 = self:computeScore(output, sample.target, 1)
 		top1Sum = top1Sum + top1*batchsize

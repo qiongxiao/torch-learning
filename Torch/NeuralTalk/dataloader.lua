@@ -67,6 +67,10 @@ function DataLoader:size()
 	return math.ceil(self.__size / self.batchsize)
 end
 
+function DataLoader:getVocab()
+	return self.dataset.vocab, self.dataset.devocab, self.dataset.vocabSize
+end
+
 function DataLoader:run()
 	local size, batchsize = self.__size, self.batchsize
 	-- randomize the order of data

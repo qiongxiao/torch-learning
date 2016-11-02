@@ -43,21 +43,20 @@ function M.setup(opt, vocabSize, checkpoint)
 		feature2seq = torch.load(modelPath)
 	else
 		print('<model init> => Creating cnn model from file: models/' .. opt.cnnType .. '.lua')
-		cnn = = nn.FeatureToSeq(opt, vocabSize)
+		feature2seq = nn.FeatureToSeq(opt, vocabSize)
 	end
 	
-	local model = nn.Sequential()
-	model:add(cnn)
-	model:add(expander)
-	model:add(feature2seq)
-	model:cuda()
+	
+	cnn:cuda()
+	expander:cuda()
+	feature2seq:cuda()
 
 	-- Set the CUDNN flags
 	cudnn.fastest = true
 	cudnn.benchmark = true
 
 	local criterion = nn.seqCrossEntropyCriterion():cuda()
-	return model, criterion
+	return cnn, expander, feature2seq, criterion
 end
 
 return M

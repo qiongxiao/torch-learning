@@ -65,6 +65,7 @@ end
 function Trainer:train(epoch, dataloader, finetune, plotter)
 	-- Trains the model for a single epoch
 	self.optimConfig.learningRate = self:learningRate(epoch)
+	self.cnnOptimizer.learningRate = self:learningRate(epoch, 'cnn')
 
 	local timer = torch.Timer()
 	local dataTimer = torch.Timer()
@@ -206,21 +207,30 @@ function Trainer:copyInputs(sample)
 	self.target:resize(sample.target:size()):copy(sample.target)
 end
 
-function Trainer:learningRate(epoch)
+function Trainer:learningRate(epoch, model)
 	-- Training schedule
-	if self.opt.decay == 'default' then
-		local decay = 0
-		if self.opt.dataset == 'imagenet' then
-			decay = math.floor((epoch - 1) / 30)
-		elseif self.opt.dataset == 'cifar10' then
-			decay = epoch >= 122 and 2 or epoch >= 81 and 1 or 0
-		elseif self.opt.dataset == 'cifar100' then
-			decay = epoch >= 122 and 2 or epoch >= 81 and 1 or 0
+	if model == 'cnn' then
+		if self.opt.cnnDecay == 'default' then
+			local decay = 0
+			if self.opt.dataset == 'mscoco' then
+				decay = math.floor((epoch - 1) / 30)
+			end
+			return self.opt.cnnLr * math.pow(0.1, decay)
+		else
+			local decay = math.floor((epoch - 1) / self.opt.cnnDecay_every)
+			return self.opt.cnnLr * math.pow(self.opt.cnnDecay_factor, decay)
 		end
-		return self.opt.lr * math.pow(0.1, decay)
 	else
-		local decay = math.floor((epoch - 1) / self.opt.decay_every)
-		return self.opt.lr * math.pow(self.opt.decay_factor, decay)
+		if self.opt.decay == 'default' then
+			local decay = 0
+			if self.opt.dataset == 'mscoco' then
+				decay = math.floor((epoch - 1) / 30)
+			end
+			return self.opt.lr * math.pow(0.1, decay)
+		else
+			local decay = math.floor((epoch - 1) / self.opt.decay_every)
+			return self.opt.lr * math.pow(self.opt.decay_factor, decay)
+		end
 	end
 end
 

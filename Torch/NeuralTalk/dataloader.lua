@@ -67,8 +67,29 @@ function DataLoader:size()
 	return math.ceil(self.__size / self.batchsize)
 end
 
-function DataLoader:getVocab()
-	return self.dataset.vocab, self.dataset.devocab, self.dataset.vocabSize
+function DataLoader:getVocabSize()
+	return self.dataset.vocabSize
+end
+
+--[[
+--	input:
+--		torch.Tensor of size batchsize * seqLength
+--]]
+function DataLoader:decode(seq)
+	local batchsize, seqLength = seq:size(1), seq:size(2)
+	local out = {}
+	for i = 1, batchsize do
+		local txt = ''
+		for j = 1, seqLength do
+			local idx = seq[i][j]
+			local word = self.dataset.devocab[idx]
+			if not word then break end
+			if j >= 2 then txt = txt .. ' ' end
+			txt = txt .. word
+		end
+	end
+	table.insert(out, txt)
+	return out
 end
 
 function DataLoader:run()

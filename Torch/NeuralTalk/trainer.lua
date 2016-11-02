@@ -167,7 +167,7 @@ function Trainer:test(epoch, dataloader)
 		N = N + batchsize
 
 		local seq = self.feature2seq:inference(sefl.cnn.output)
-		--####################decode
+		local out = dataloader:decode(seq)
 
 		print((' | eval: [%d][%d/%d]    Time %.3f  Data %.3f  Err %1.4f'):format(
 			epoch, n, size, timer:time().real, dataTime, loss))
@@ -180,10 +180,10 @@ function Trainer:test(epoch, dataloader)
 	print((' * Finished epoch # %d    Err: %7.3f\n'):format(
 		epoch, lossSum / N))
 
-	return lossSum / N
+	return lossSum / N, out
 end
 
-function Trainer:inference(imgs)
+function Trainer:inference(imgs, dataloader)
 
 	self.model:evaluate()
 
@@ -191,10 +191,10 @@ function Trainer:inference(imgs)
 
 	self.cnn:forward(imgs)
 	local output = self.feature2seq:inference(self.cnn.output)
-	--####################### transfer #######################
+	local out = dataloader:decode(seq)
 
 	self.model:training()
-	return output
+	return out
 end
 
 function Trainer:copyInputs(sample)

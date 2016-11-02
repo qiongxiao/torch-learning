@@ -91,7 +91,7 @@ local function createModel(opt)
 		model:add(nn.Dropout(opt.dropout))
 	end
 	model:add(nn.Linear(512 * size * size, 4096))
-	model:add(nn.BatchNormalization(512))
+	model:add(nn.BatchNormalization(4096))
 	model:add(nn.ReLU())
 
 	if opt.dropout > 0 then

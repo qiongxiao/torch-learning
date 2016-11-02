@@ -90,14 +90,14 @@ local function createModel(opt)
 	if opt.dropout > 0 then
 		model:add(nn.Dropout(opt.dropout))
 	end
-	model:add(nn.Linear(512, 512))
+	model:add(nn.Linear(512 * size * size, 4096))
 	model:add(nn.BatchNormalization(512))
 	model:add(nn.ReLU())
 
 	if opt.dropout > 0 then
 		model:add(nn.Dropout(opt.dropout))
 	end
-	model:add(nn.Linear(512, nClasses))
+	model:add(nn.Linear(4096, nClasses))
 
 	local function ConvInit(name)
 		for k,v in pairs(model:findModules(name)) do

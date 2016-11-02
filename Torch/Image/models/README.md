@@ -75,11 +75,11 @@ VGGnet Construction shows as follows,
 > ConvBNReLU[256, 512] --> Dropout --> ConvBNReLU[512, 512] --> Dropout --> ConvBNReLU[512, 512] --> MaxPooling -->
 > ConvBNReLU[512, 512] --> Dropout --> ConvBNReLU[512, 512] --> Dropout --> ConvBNReLU[512, 512] --> MaxPooling -->
 >
-> View[512*oSize*oSize] --> Dropout --> FC[512, 512] -->
+> View[512*oSize*oSize] --> Dropout --> FC[512*oSize*oSize, 4096] -->
 >
 > (or Conv[512, 512, oSize, oSize] -->)
 >
-> batchnorm --> ReLU --> Dropout --> FC[512, 10] - (-> using softmax)
+> batchnorm --> ReLU --> Dropout --> FC[4096, nClasses] - (-> using softmax)
 
 ### ResNet
 

@@ -103,6 +103,8 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 		self.criterion:backward(self.feature2seq.output, self.target)
 		self.feature2seq:backward({self.cnn.output, self.target}, self.criterion.gradInput:cuda())
 
+		self.params:clamp(-self.opt.gradClip, self.opt.gradClip)
+
 		if finetune == 1 then
 			self.cnn:backward(self.input, self.feature2seq.gradInput[1])
 		end
@@ -137,6 +139,7 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 			plotter:add('Train Loss - Iteration', 'Train', (epoch-1)*trainSize+n, loss)
 		end
 	end
+	collectgarbage()
 	return lossSum / N
 end
 
@@ -168,6 +171,7 @@ function Trainer:test(epoch, dataloader)
 
 		local seq = self.feature2seq:inference(self.cnn.output)
 		local out = dataloader:decode(seq)
+		print(out[1])
 
 		print((' | eval: [%d][%d/%d]    Time %.3f  Data %.3f  Err %1.4f'):format(
 			epoch, n, size, timer:time().real, dataTime, loss))
@@ -180,7 +184,7 @@ function Trainer:test(epoch, dataloader)
 
 	print((' * Finished epoch # %d    Err: %7.3f\n'):format(
 		epoch, lossSum / N))
-
+	collectgarbage()
 	return lossSum / N, out
 end
 

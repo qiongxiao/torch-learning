@@ -84,7 +84,7 @@ end
 --		torch.Tensor of size batchsize * seqLength
 --]]
 function DataLoader:decode(seq)
-	local batchsize, seqLength = seq:size(1), seq:size(2)
+	local batchsize, seqLength = seq:size(1), seq:size(2)-1
 	local out = {}
 	for i = 1, batchsize do
 		local txt = ''
@@ -95,8 +95,8 @@ function DataLoader:decode(seq)
 			if j >= 2 then txt = txt .. ' ' end
 			txt = txt .. word
 		end
+		table.insert(out, txt)
 	end
-	table.insert(out, txt)
 	return out
 end
 

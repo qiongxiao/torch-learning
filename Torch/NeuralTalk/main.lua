@@ -71,15 +71,18 @@ for epoch = startEpoch, opt.maxEpochs do
 		bestLoss = testLoss
 		print('<Training> * Best model Loss:', testLoss)
 	end
-	
+	collectgarbage()
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
 		checkpoints.saveModel(epoch, cnn, feature2seq, trainer.optimConfig, trainer.cnnOptimConfig, bestModel, opt)
 		plotter:checkpoint()
 	end
 	
+	print("plot")
 	plotter:add('Train Loss - Epoch', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Validation', epoch, testLoss)
+
+	collectgarbage()
 end
 
 if (opt.dataset == 'flickr8k') then

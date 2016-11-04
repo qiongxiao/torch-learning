@@ -43,10 +43,10 @@ function layer:_createInitState(batchsize)
 		-- note, the init state MUST be zeros because we are using initState to init grads in backward call too
 		if self.initState[h] then
 			if self.initState[h]:size(1) ~= batchsize then
-				self.initState[h]:resize(batchsize, self.rnn_size):zero() -- expand the memory
+				self.initState[h]:resize(batchsize, self.hiddenStateSize):zero() -- expand the memory
 			end
 		else
-			self.initState[h] = torch.zeros(batchsize, self.rnn_size)
+			self.initState[h] = torch.zeros(batchsize, self.hiddenStateSize):cuda()
 		end
 	end
 	self.numState = #self.initState
@@ -114,10 +114,11 @@ function layer:updateOutput(input)
 	-- seqEncoded's size is "batchsize * (seqLength+1) * encodingSize"
 	self.lstmInput = torch.cat({feats:view(batchsize, 1, self.encodingSize), seqEncoded}, 2)
 	-- lstmInput's size is "batchsize * (seqLength+2) * encodingSize"
-	self.lstmInput = self.lstmInput:transpose(1, 2):contiguous()
+	self.lstmInput = self.lstmInput:transpose(1, 2)
 	-- lstmInput's size is "(seqLength+2) * batchsize * encodingSize"
 	self.output = self.lstm:forward(self.lstmInput)
-	self.output = self.output:transpose(1, 2):contiguous()
+	self.output = self.output:transpose(1, 2)
+
 	return self.output
 end
 
@@ -185,7 +186,8 @@ function layer:inference(imgs)
 		end
 
 		local inputs = {xt, unpack(state)}
-		local out = self.cell:forward(inputs)
+
+		local out = self.lstmCell:forward(inputs)
 		logprobs = out[self.numState+1]
 		state = {}
 		for i = 1, self.numState do table.insert(state, out[i]) end

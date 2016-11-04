@@ -101,9 +101,7 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 			self.cnn:zeroGradParameters()
 		end
 		self.criterion:backward(self.feature2seq.output, self.target)
-		local gi = torch.CudaTensor()
-		gi:resize(self.criterion.gradInput:size()):copy(self.criterion.gradInput)
-		self.feature2seq:backward({self.cnn.output, self.target}, gi)
+		self.feature2seq:backward({self.cnn.output, self.target}, self.criterion.gradInput:cuda())
 
 		if finetune == 1 then
 			self.cnn:backward(self.input, self.feature2seq.gradInput[1])
@@ -168,7 +166,7 @@ function Trainer:test(epoch, dataloader)
 		lossSum = lossSum + loss*batchsize
 		N = N + batchsize
 
-		local seq = self.feature2seq:inference(sefl.cnn.output)
+		local seq = self.feature2seq:inference(self.cnn.output)
 		local out = dataloader:decode(seq)
 
 		print((' | eval: [%d][%d/%d]    Time %.3f  Data %.3f  Err %1.4f'):format(

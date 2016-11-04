@@ -23,6 +23,7 @@ end
 function crit:updateOutput(input, seq)
 	local batchsize, L, Mp1 = input:size(1), input:size(2), input:size(3)
 	self.gradInput:resize(batchsize, L, Mp1):zero()
+
 	local seqLength = seq:size(2)-1
 	assert(seqLength == L-2, 'input Tensor should be 2 larger in time')
 
@@ -61,5 +62,5 @@ function crit:updateOutput(input, seq)
 end
 
 function crit:updateGradInput(input, seq)
-  return self.gradInput
+	return self.gradInput
 end

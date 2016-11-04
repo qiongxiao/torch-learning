@@ -15,8 +15,8 @@ function M.parse(arg)
 	cmd:text()
 	cmd:text('Options:')
 	------------- General options ---------------------
-	cmd:option('-data',			'gen/mscoco',	'Path to dataset')
-	cmd:option('-dataset',		'mscoco',		'Options: mscoco')
+	cmd:option('-data',			'',				'Path to dataset')
+	cmd:option('-dataset',		'mscoco',		'Options: flickr8k | mscoco')
 	cmd:option('-manualSeed',	0,				'Manually set RNG seed')
 	------------- Data options ------------------------
 	cmd:option('-dataAug',				0,		'whether augment data')
@@ -36,8 +36,8 @@ function M.parse(arg)
 	cmd:option('-resume',		'none',			'Resume from the latest checkpoint in this directory')
 	cmd:option('-checkEvery',	1,				'checkpoint every epcoh #')
 	------------- Plotting options --------------------
-	cmd:option('-plotPath',		'plot/out',		'Path to output plot file (excluding .json)')
-	cmd:option('-plotEvery',	0,				'Whether to plot every iteration')
+	cmd:option('-plotPath',			'plot/out',	'Path to output plot file (excluding .json)')
+	cmd:option('-plotEvery',		0,			'Whether to plot every iteration')
 	------------- Optimization options ----------------
 	cmd:option('-optimizer',		'adam',		'optimizer algorithm: adam | sgd')
 	cmd:option('-lr',				0.1,		'initial learning rate')
@@ -63,14 +63,15 @@ function M.parse(arg)
 	cmd:option('-resnetDepth',		34,			'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')
 	cmd:option('-shortcutType',		'',			'Options: A | B')
 	------------- lstm Model options -----------------------
-	cmd:option('-rDepth',			512,		'depth of lstm')
-	cmd:option('-encodingSize',		10,			'size of encoding of lstm input')
-	cmd:option('-hiddenStateSize',	10,			'size of hidden state in lstm')
+	cmd:option('-rDepth',			1,			'depth of lstm')
+	cmd:option('-encodingSize',		512,		'size of encoding of lstm input')
+	cmd:option('-hiddenStateSize',	512,		'size of hidden state in lstm')
 	cmd:option('-lstmDropout',		0.5,		'dropout for  lstm')
 	cmd:option('-inferenceMax',		1,			'using argmax algorithm to get word')
 	cmd:option('-temperature',		1,			'using argmax algorithm to get word')
 	------------- Model options -----------------------
 	cmd:option('-retrain',			'none',		'Path to cnn model to retrain with')
+	cmd:option('-resetCNNlastlayer','false',	'Reset the fully connected layer for fine-tuning')
 
 	cmd:text()
 
@@ -78,6 +79,7 @@ function M.parse(arg)
 
 	opt.testOnly = opt.testOnly ~= 'false'
 	opt.tenCrop = opt.tenCrop ~= 'false'
+	opt.resetCNNlastlayer = opt.resetCNNlastlayer ~= 'false'
 
 	if not paths.dirp(opt.save) and not paths.mkdir(opt.save) then
 		cmd:error('error: unable to create checkpoint directory: ' .. opt.save .. '\n')
@@ -92,6 +94,9 @@ function M.parse(arg)
 			cmd:error('error: ImageNet missing `train2014` directory: ' .. trainDir)
 		end
 		-- Default shortcutType=B and nEpochs=90
+		opt.shortcutType = opt.shortcutType == '' and 'B' or opt.shortcutType
+		opt.maxEpochs = opt.maxEpochs == 0 and 90 or opt.maxEpochs
+	elseif opt.dataset == 'flickr8k' then
 		opt.shortcutType = opt.shortcutType == '' and 'B' or opt.shortcutType
 		opt.maxEpochs = opt.maxEpochs == 0 and 90 or opt.maxEpochs
 	else

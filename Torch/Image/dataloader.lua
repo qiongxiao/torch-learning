@@ -8,6 +8,7 @@
 
 local datasets = require 'datasets/init'
 local Threads = require 'threads'
+local image = require 'image'
 Threads.serialization('threads.sharedserialize')
 
 local M = {}

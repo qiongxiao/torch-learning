@@ -116,11 +116,18 @@ function Trainer:test(epoch, dataloader)
 		-- Copy input and target to the GPU
 		self:copyInputs(sample)
 
-		local output = self.model:forward(self.input):float()
-		local batchsize = output:size(1) / nCrops
-		local loss = self.criterion:forward(self.model.output, self.target)
+		local output = self.model:forward(self.input)
+		local nOutput = output
+		if nCrops > 1 then
+			-- Sum over crops
+			nOutput = output:view(output:size(1) / nCrops, nCrops, output:size(2))
+			:sum(2):squeeze(2)
+		end
 
-		local top1, top5 = self:computeScore(output, sample.target, nCrops)
+		local batchsize = nOutput:size(1)
+		local loss = self.criterion:forward(nOutput, self.target)
+
+		local top1, top5 = self:computeScore(nOutput:float(), sample.target, nCrops)
 		top1Sum = top1Sum + top1*batchsize
 		top5Sum = top5Sum + top5*batchsize
 		lossSum = lossSum + loss*batchsize
@@ -141,13 +148,6 @@ function Trainer:test(epoch, dataloader)
 end
 
 function Trainer:computeScore(output, target, nCrops)
-	if nCrops > 1 then
-		-- Sum over crops
-		output = output:view(output:size(1) / nCrops, nCrops, output:size(2))
-		--:exp()
-			:sum(2):squeeze(2)
-	end
-
 	-- Computes the top1 and top5 error rate
 	local batchsize = output:size(1)
 

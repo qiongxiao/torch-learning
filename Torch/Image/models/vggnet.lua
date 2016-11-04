@@ -20,7 +20,7 @@ local function createModel(opt)
 	end
 
 	local size, nClasses
-	if opt.dataset == 'cifar10' opt.dataset == 'cifar100' then
+	if opt.dataset == 'cifar10' or opt.dataset == 'cifar100' then
 		size = 1
 		nClasses = (opt.dataset == 'cifar10') and 10 or 100
 	elseif opt.dataset == 'imagenet' then
@@ -35,7 +35,7 @@ local function createModel(opt)
 	local model = nn.Sequential()
 
 	model:add(ConvBNReLU(3, 64))
-	if opt.conv_dropout > 0 then
+	if opt.convDropout > 0 then
 		model:add(nn.Dropout(opt.convDropout))
 	end
 	model:add(ConvBNReLU(64, 64))

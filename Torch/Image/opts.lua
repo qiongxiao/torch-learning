@@ -62,6 +62,10 @@ function M.parse(arg)
 
 	opt.testOnly = opt.testOnly ~= 'false'
 	opt.tenCrop = opt.tenCrop ~= 'false'
+	if opt.dataset ~= 'imagenet' and opt.tenCrop then
+		cmd:error('only imagenet dataset has tenCrop config')
+	end
+
 	opt.shareGradInput = opt.shareGradInput ~= 'false'
 	opt.optnet = opt.optnet ~= 'false'
 	opt.resetClassifier = opt.resetClassifier ~= 'false'

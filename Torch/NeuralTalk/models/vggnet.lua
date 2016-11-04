@@ -19,15 +19,15 @@ local function createModel(opt)
 			:add(ReLU(true))
 	end
 
-	local nClasses = opt.encodingSize
 	local size
-	if opt.dataset == 'mscoco'
-		size = 8 --256/2^5
+	if opt.dataset == 'mscoco' or opt.dataset == 'flickr8k'
+		size = 7 --224/2^5
 	else
 		error('invalid dataset: ' .. opt.dataset)
 	end
 
 	local model = nn.Sequential()
+	local nFeatures = 4096
 
 	model:add(ConvBNReLU(3, 64))
 	if opt.cnnCONVdropout > 0 then
@@ -85,14 +85,13 @@ local function createModel(opt)
 	if opt.cnnFCdropout > 0 then
 		model:add(nn.Dropout(opt.cnnFCdropout))
 	end
-	model:add(nn.Linear(512 * size * size, 4096))
-	model:add(nn.BatchNormalization(4096))
+	model:add(nn.Linear(512 * size * size, nFeatures))
+	model:add(nn.BatchNormalization(nFeatures))
 	model:add(nn.ReLU())
 
 	if opt.cnnFCdropout > 0 then
 		model:add(nn.Dropout(opt.cnnFCdropout))
 	end
-	model:add(nn.Linear(4096, nClasses))
 
 	local function ConvInit(name)
 		for k,v in pairs(model:findModules(name)) do
@@ -121,11 +120,10 @@ local function createModel(opt)
 	for k,v in pairs(model:findModules('nn.Linear')) do
 		v.bias:zero()
 	end
-	model:cuda()
 
 	model:get(1).gradInput = nil
 
-	return model
+	return model, nFeatures
 end
 
 return createModel

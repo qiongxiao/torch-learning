@@ -13,9 +13,9 @@ local optim = require 'optim'
 local M = {}
 local Trainer = torch.class('cnn.Trainer', M)
 
-function Trainer:__init(cnn, expander, feature2seq, criterion, opt, optimConfig, cnnOptimConfig)
-	self.cnn, self.expander, self.feature2seq = cnn, expander, feature2seq
-	self.criterion = criterion
+function Trainer:__init(cnn, feature2seq, criterion, opt, optimConfig, cnnOptimConfig)
+	self.cnn, self.feature2seq = cnn, feature2seq
+	self.criterion = criterion:cuda()
 
 	self.optimizer = opt.optimizer
 	if self.optimizer == 'sgd' then
@@ -65,7 +65,7 @@ end
 function Trainer:train(epoch, dataloader, finetune, plotter)
 	-- Trains the model for a single epoch
 	self.optimConfig.learningRate = self:learningRate(epoch)
-	self.cnnOptimizer.learningRate = self:learningRate(epoch, 'cnn')
+	self.cnnOptimConfig.learningRate = self:learningRate(epoch, 'cnn')
 
 	local timer = torch.Timer()
 	local dataTimer = torch.Timer()
@@ -83,17 +83,17 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 
 	print('<Training> => Training epoch # ' .. epoch)
 	-- set the batch norm to training mode
-	self.model:training()
+	self.cnn:training()
+	self.feature2seq:training()
 	for n, sample in dataloader:run() do
 		local dataTime = dataTimer:time().real
 
-		local batchsize = sample.input:size(1) / nCrops
+		local batchsize = sample.input:size(1)
 		-- Copy input and target to the GPU
 		self:copyInputs(sample)
 
 		self.cnn:forward(self.input)
-		self.expander:forward(self.cnn.output)
-		self.feature2seq:forward({self.expander.output, self.target})
+		self.feature2seq:forward({self.cnn.output, self.target})
 		local loss = self.criterion:forward(self.feature2seq.output, self.target)
 
 		self.feature2seq:zeroGradParameters()
@@ -101,11 +101,12 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 			self.cnn:zeroGradParameters()
 		end
 		self.criterion:backward(self.feature2seq.output, self.target)
-		self.feature2seq:backward({self.expander.output, self.target}, self.criterion.gradInput)
+		local gi = torch.CudaTensor()
+		gi:resize(self.criterion.gradInput:size()):copy(self.criterion.gradInput)
+		self.feature2seq:backward({self.cnn.output, self.target}, gi)
 
 		if finetune == 1 then
-			self.expander:backward(self.cnn.output, self.feature2seq.gradInput[1])
-			self.cnn:backward(self.input, self.expander:gradInput)
+			self.cnn:backward(self.input, self.feature2seq.gradInput[1])
 		end
 
 		if self.optimizer == 'sgd' then
@@ -151,7 +152,8 @@ function Trainer:test(epoch, dataloader)
 	local lossSum = 0.0
 	local N = 0
 
-	self.model:evaluate()
+	self.cnn:evaluate()
+	self.feature2seq:evaluate()
 	for n, sample in dataloader:run() do
 		local dataTime = dataTimer:time().real
 
@@ -160,8 +162,7 @@ function Trainer:test(epoch, dataloader)
 		self:copyInputs(sample)
 
 		self.cnn:forward(self.input)
-		self.expander:forward(self.cnn.output)
-		self.feature2seq:forward({self.expander.output, self.target})
+		self.feature2seq:forward({self.cnn.output, self.target})
 		local loss = self.criterion:forward(self.feature2seq.output, self.target)
 
 		lossSum = lossSum + loss*batchsize
@@ -176,7 +177,8 @@ function Trainer:test(epoch, dataloader)
 		timer:reset()
 		dataTimer:reset()
 	end
-	self.model:training()
+	self.cnn:training()
+	self.feature2seq:training()
 
 	print((' * Finished epoch # %d    Err: %7.3f\n'):format(
 		epoch, lossSum / N))
@@ -186,7 +188,8 @@ end
 
 function Trainer:inference(imgs, dataloader)
 
-	self.model:evaluate()
+	self.cnn:evaluate()
+	self.feature2seq:evaluate()
 
 	imgs:cuda()
 
@@ -194,7 +197,8 @@ function Trainer:inference(imgs, dataloader)
 	local output = self.feature2seq:inference(self.cnn.output)
 	local out = dataloader:decode(seq)
 
-	self.model:training()
+	self.cnn:training()
+	self.feature2seq:training()
 	return out
 end
 

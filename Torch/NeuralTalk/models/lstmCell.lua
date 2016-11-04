@@ -3,7 +3,7 @@
 --  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LSTM.lua'
 --
 --]]
-local nn = require 'nn'
+require 'nn'
 require 'nngraph'
 
 --[[

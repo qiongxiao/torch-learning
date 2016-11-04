@@ -17,7 +17,6 @@ local SBatchNorm = nn.SpatialBatchNormalization
 
 local function createModel(opt)
 	local depth = opt.resnetDepth
-	local nClasses = opt.encodingSize
 	local shortcutType = opt.shortcutType or 'B'
 	local iChannels
 
@@ -95,6 +94,8 @@ local function createModel(opt)
 	end
 
 	local model = nn.Sequential()
+	local g_nFeatures
+
 	if opt.dataset == 'mscoco' then
 		-- Configurations for ResNet:
 		--  num. residual blocks, num features, residual block function
@@ -120,9 +121,9 @@ local function createModel(opt)
 		model:add(layer(block, 128, def[2], 2))
 		model:add(layer(block, 256, def[3], 2))
 		model:add(layer(block, 512, def[4], 2))
-		model:add(Avg(8, 8, 1, 1))
+		model:add(Avg(7, 7, 1, 1))
 		model:add(nn.View(nFeatures):setNumInputDims(3))
-		model:add(nn.Linear(nFeatures, nClasses))
+		g_nFeatures = nFeatures
 	else
 		error('invalid dataset: ' .. opt.dataset)
 	end
@@ -154,11 +155,10 @@ local function createModel(opt)
 	for k,v in pairs(model:findModules('nn.Linear')) do
 		v.bias:zero()
 	end
-	model:cuda()
 
 	model:get(1).gradInput = nil
 
-	return model
+	return model, g_nFeatures
 end
 
 return createModel

@@ -8,10 +8,11 @@ require 'nn'
 
 local layer, parent = torch.class('nn.dynamicLSTM', 'nn.Module')
 
-function layer:__init(cell, rLength, rDepth, skipFlag)
+function layer:__init(cell, inputSize, outputSize, hiddenStateSize, rLength, rDepth, skipFlag)
 	parent.__init(self)
 	self.inputSize = inputSize
 	self.outputSize = outputSize
+	self.hiddenStateSize = hiddenStateSize
 	self.rLength = rLength
 	self.rDepth = rDepth
 	self.cell = cell
@@ -26,10 +27,10 @@ function layer:_createInitState(batchsize)
 		-- note, the init state MUST be zeros because we are using initState to init grads in backward call too
 		if self.initState[h] then
 			if self.initState[h]:size(1) ~= batchsize then
-				self.initState[h]:resize(batchsize, self.rnn_size):zero() -- expand the memory
+				self.initState[h]:resize(batchsize, self.hiddenStateSize):zero() -- expand the memory
 			end
 		else
-			self.initState[h] = torch.zeros(batchsize, self.rnn_size)
+			self.initState[h] = torch.zeros(batchsize, self.hiddenStateSize)
 		end
 	end
 	self.numState = #self.initState
@@ -67,11 +68,11 @@ function layer:updateOutput(input)
 	if self.slices == nil then self:createSlices() end -- lazily create clones on first forward pass
 	assert(input:size(1) == self.rLength)
 	local batchsize = input:size(2)
-	self.output:resize(rLength, batchsize, self.outputSize)
+	self.output:resize(self.rLength, batchsize, self.outputSize)
 
-	self._createInitState(batchsize)
+	self:_createInitState(batchsize)
 
-	self.state{[0] = self.initState}
+	self.state = {[0] = self.initState}
 	self.inputs = {}
 
 	for t = 1, self.rLength do
@@ -88,6 +89,7 @@ function layer:updateOutput(input)
 end
 
 function layer:updateGradInput(input, gradOutput)
+	self.gradInput:resizeAs(input):zero()
 	local dState = {[self.rLength] = self.initState}
 	for t = self.rLength, 1, -1 do
 		local dout = {}

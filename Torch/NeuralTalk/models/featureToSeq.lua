@@ -4,14 +4,21 @@
 --
 --]]
 
+require 'cutorch'
 local nn = require 'nn'
-require 'models.lstm'
 local lstmCell = require 'models.lstmCell'
+require 'models.expander'
+require 'models.dynamicLSTM'
 
 local layer, parent = torch.class('nn.FeatureToSeq', 'nn.Module')
 
-function layer:__init(opt, vocabSize)
+function layer:__init(opt, nFeatures, vocabSize)
 	parent.__init(self)
+
+	self.nFeatures = nFeatures
+	self.linear = nn.Linear(nFeatures, opt.encodingSize)
+	self.linear.bias:zero()
+	self.expander = nn.Expander(opt.seqPerImg)
 
 	self.vocabSize = vocabSize
 	self.encodingSize = opt.encodingSize
@@ -20,7 +27,7 @@ function layer:__init(opt, vocabSize)
 	self.hiddenStateSize = opt.hiddenStateSize
 
 	self.lstmCell = lstmCell(self.encodingSize, self.vocabSize+1, self.hiddenStateSize, self.rDepth, opt.lstmDropout)
-	self.lstm = nn.LSTM(self.lstmCell, self.seqLength+2, self.rDepth)
+	self.lstm = nn.dynamicLSTM(self.lstmCell, self.encodingSize, self.vocabSize+1, self.hiddenStateSize, self.seqLength+2, self.rDepth)
 
 	self.lookupTable = nn.LookupTable(self.vocabSize+1, self.encodingSize)
 
@@ -46,18 +53,21 @@ function layer:_createInitState(batchsize)
 end
 
 function layer:getModulesList()
-	return {self.lstmCell, self.lookupTable}
+	return {self.linear, self.expander, self.lstmCell, self.lookupTable}
 end
 
 function layer:parameters()
+	local p0,g0 = self.linear:parameters()
 	local p1,g1 = self.lstmCell:parameters()
 	local p2,g2 = self.lookupTable:parameters()
 
 	local params = {}
+	for k,v in pairs(p0) do table.insert(params, v) end
 	for k,v in pairs(p1) do table.insert(params, v) end
 	for k,v in pairs(p2) do table.insert(params, v) end
 
 	local grad_params = {}
+	for k,v in pairs(g0) do table.insert(grad_params, v) end
 	for k,v in pairs(g1) do table.insert(grad_params, v) end
 	for k,v in pairs(g2) do table.insert(grad_params, v) end
 
@@ -66,19 +76,23 @@ function layer:parameters()
 end
 
 function layer:training()
+	self.linear:training()
+	self.expander:training()
 	self.lstm:training()
 	self.lookupTable:training()
 end
 
 function layer:evaluate()
+	self.linear:evaluate()
+	self.expander:evaluate()
 	self.lstm:evaluate()
 	self.lookupTable:evaluate()
 end
 
 --[[
 	input is a table of:
-		1.	torch.Tensor of size "batchsize * encodingSize"
-		2.	torch.LongTensor of size "batchsize * seqLength", elements 1..M
+		1.	torch.Tensor of size "batchsize(unexpanded) * nFeatures"
+		2.	torch.LongTensor of size "batchsize(expanded) * (seqLength+1)", elements 1..M
 			where M = vocabSize
 	output:
 		torch.Tensor of size "batchsize * (seqLength+2) * (M+1)"
@@ -86,15 +100,19 @@ end
 function layer:updateOutput(input)
 	local imgs = input[1]
 	local seq = input[2]
+	assert(imgs:size(2) == self.nFeatures)
+	assert(seq:size(2) == self.seqLength+1)
 
-	assert(imgs:size(2) == self.encodingSize)
-	assert(seq:size(2) == self.seqLength)
+	-- size "batchsize(unexpanded) * nFeatures" --> size "batchsize(expanded) * encodingSize"
+	self.linear:forward(imgs)
+	local feats = self.expander:forward(self.linear.output)
 
 	local batchsize = seq:size(1)
-	self.lookupTableInput = torch.cat({torch.Tensor(batchsize, 1):fill(self.vocabSize+1), seq})
-	local seqEncoded = self.lookupTable:forward(lookupTableInput)
+
+	--torch.cat({torch.LongTensor(batchsize, 1):fill(self.vocabSize+1), seq})
+	local seqEncoded = self.lookupTable:forward(seq)
 	-- seqEncoded's size is "batchsize * (seqLength+1) * encodingSize"
-	self.lstmInput = torch.cat({imgs:view(batchsize, 1, self.encodingSize), seqEncoded}, 2)
+	self.lstmInput = torch.cat({feats:view(batchsize, 1, self.encodingSize), seqEncoded}, 2)
 	-- lstmInput's size is "batchsize * (seqLength+2) * encodingSize"
 	self.lstmInput = self.lstmInput:transpose(1, 2):contiguous()
 	-- lstmInput's size is "(seqLength+2) * batchsize * encodingSize"
@@ -104,17 +122,18 @@ function layer:updateOutput(input)
 end
 
 function layer:updateGradInput(input, gradOutput)
-	local dImgs
+	local dFeats
 	local dlstmInput = self.lstm:backward(self.lstmInput, gradOutput:transpose(1, 2))
-	local dlookupTableInput = self.lookupTable:backward(self.rLookupTableInput, dlstmInput:narrow(1, 2, self.seqLength+1):transpose(1, 2))
-	dImgs = dlstmInput[1]:view(input[1]:size())
+	local dlookupTableInput = self.lookupTable:backward(input[2], dlstmInput:narrow(1, 2, self.seqLength+1):transpose(1, 2))
+	self.expander:backward(self.linear.output, dlstmInput[1])
+	dImgs = self.linear:backward(input[1], self.expander.gradInput)
 	self.gradInput = {dImgs, torch.Tensor()}
 	return self.gradInput
 end
 
 --[[
 	input:
-		torch.Tensor of size "batchsize * encodingSize"
+		torch.Tensor of size "batchsize * nFeatures"
 	output:
 		torch.Tensor of size "batchsize * seqLength"
 --]]
@@ -122,7 +141,10 @@ function layer:inference(imgs)
 	local inferenceMax = self.inferenceMax
 	local temperature = self.temperature
 
-	local batchsize = imgs:size(1)
+	-- size "batchsize * nFeatures" --> size "batchsize * encodingSize"
+	local feats = self.linear:forward(imgs)
+
+	local batchsize = feats:size(1)
 	self:_createInitState(batchsize)
 	local state = self.initState
 
@@ -135,7 +157,7 @@ function layer:inference(imgs)
 		local xt, it, inferenceProbs
 
 		if t == 1 then
-			xt = imgs
+			xt = feats
 		elseif t == 2 then
 			it = torch.LongTensor(batchsize):fill(self.vocabSize+1)
 			xt = self.lookupTable:forward(it)

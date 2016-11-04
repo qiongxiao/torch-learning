@@ -17,7 +17,15 @@ function DataLoader.create(opt)
 	-- The train and val loader
 	local loaders = {}
 
-	for i, split in ipairs{'train', 'val'} do
+	local splits
+
+	if opt.dataset == 'flickr8k' then
+		splits = {'train', 'val', 'test'}
+	else
+		splits = {'train', 'val'}
+	end
+
+	for i, split in pairs(splits) do
 		local config = {
 			opt = opt,
 			split = split,
@@ -108,7 +116,8 @@ function DataLoader:run()
 			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1)):long()
 			local sz = indices:size(1)
 			local batch, imageSize
-			local target = torch.IntTensor(sz * seqPerImg, seqLength)
+			local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
+			target[{{},{1}}]:fill(self.dataset.vocabSize+1)
 			for i, idx in ipairs(indices:totable()) do
 				local sample = self.dataset:get(idx)
 
@@ -123,7 +132,7 @@ function DataLoader:run()
 
 				-- fetch sequences
 				local seq
-				local nSeq = sampe.target:size(1)
+				local nSeq = sample.target:size(1)
 				if nSeq < seqPerImg then
 					-- we need to subsample (with replacement)
 					seq = torch.LongTensor(seqPerImg, seqLength)
@@ -139,7 +148,7 @@ function DataLoader:run()
 				end
 
 				local startIdx = (i - 1) * seqPerImg
-				target[{{startIdx+1, startIdx+seqPerImg}}] = seq
+				target[{{startIdx+1, startIdx+seqPerImg},{2, 1+seqLength}}] = seq
 			end
 			collectgarbage()
 			idx = idx + batchsize
@@ -159,7 +168,8 @@ function DataLoader:run()
 				function(indices, nCrops, seqPerImg, seqLength)
 					local sz = indices:size(1)
 					local batch, imageSize
-					local target = torch.IntTensor(sz)
+					local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
+					target[{{},{1}}]:fill(self.dataset.vocabSize+1)
 					for i, idx in ipairs(indices:totable()) do
 						local sample = _G.dataset:get(idx)
 
@@ -174,7 +184,7 @@ function DataLoader:run()
 
 						-- fetch sequences
 						local seq
-						local nSeq = sampe.target:size(1)
+						local nSeq = sample.target:size(1)
 						if nSeq < seqPerImg then
 							-- we need to subsample (with replacement)
 							seq = torch.LongTensor(seqPerImg, seqLength)
@@ -190,7 +200,7 @@ function DataLoader:run()
 						end
 
 						local startIdx = (i - 1) * seqPerImg
-						target[{{startIdx+1, startIdx+seqPerImg}}] = seq
+						target[{{startIdx+1, startIdx+seqPerImg},{2, 1+seqLength}}] = seq
 					end
 					collectgarbage()
 					return {

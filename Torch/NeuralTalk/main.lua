@@ -27,19 +27,25 @@ local checkpoint, optimState, cnnOptimState = checkpoints.loadLatestInfo(opt)
 local plotter = Plotter(opt)
 
 -- Data loading
-local trainLoader, valLoader = DataLoader.create(opt)
+local trainLoader, valLoader, testLoader = DataLoader.create(opt)
 
 local vocabSize = trainLoader:getVocabSize()
 
 -- Create model
-local cnn, expander, feature2seq, criterion = models.setup(opt, vocabSize, checkpoint)
+local cnn, feature2seq, criterion = models.setup(opt, vocabSize, checkpoint)
 
 
 -- The trainer handles the training loop and evaluation on validation set
-local trainer = Trainer(cnn, expander, feature2seq, criterion, opt, optimState, cnnOptimState)
+local trainer = Trainer(cnn, feature2seq, criterion, opt, optimState, cnnOptimState)
 
 if opt.testOnly then
-	local _, out = trainer:test(0, valLoader)
+	local loader
+	if opt.dataset == 'flickr8k' then
+		loader = testLoader
+	else
+		loader = valLoader
+	end
+	local _, out = trainer:test(0, loader)
 	utils.writeJson('predict_caption.json', out)
 	return
 end
@@ -67,11 +73,16 @@ for epoch = startEpoch, opt.maxEpochs do
 	end
 	
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
-		checkpoints.saveModel(epoch, {cnn, feature2seq}, trainer.optimConfig, trainer.cnnOptimConfig, bestModel, opt)
+		checkpoints.saveModel(epoch, cnn, feature2seq, trainer.optimConfig, trainer.cnnOptimConfig, bestModel, opt)
 		plotter:checkpoint()
 	end
 	
 	plotter:add('Train Loss - Epoch', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Validation', epoch, testLoss)
+end
+
+if (opt.dataset == 'flickr8k') then
+	local testLoss = trainer:test(0, testLoader)
+	print('<Testing> * Loss:', testLoss)
 end

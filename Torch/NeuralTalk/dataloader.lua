@@ -41,8 +41,7 @@ function DataLoader:__init(dataset, opt, split)
 	self.nThreads = opt.nThreads
 	self.seqPerImg = opt.seqPerImg
 	self.seqLength = opt.seqLength
-	self.nCrops = (split ~= 'train' and opt.tenCrop) and 10 or 1
-	self.batchsize = math.floor(opt.batchsize / self.nCrops)
+	self.batchsize = opt.batchsize
 
 	--  single-threaded version
 	if (opt.nThreads == 1) then
@@ -90,6 +89,7 @@ function DataLoader:decode(seq)
 		local txt = ''
 		for j = 1, seqLength do
 			local idx = seq[i][j]
+			-- for decode: model output range from 1 to vocabiSize+1. If output is vocabiSize+1 whose devocab should be nil, it means it is the end sign
 			local word = self.dataset.devocab[idx]
 			if not word then break end
 			if j >= 2 then txt = txt .. ' ' end
@@ -108,7 +108,6 @@ function DataLoader:run()
 	local idx, sample = 1, nil
 
 	local function makebatches()
-		local nCrops = self.nCrops
 		local seqPerImg, seqLength = self.seqPerImg, self.seqLength
 		
 		if idx <= size then
@@ -117,6 +116,7 @@ function DataLoader:run()
 			local sz = indices:size(1)
 			local batch, imageSize
 			local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
+			-- insert the start sign (vocabSize+1)
 			target[{{},{1}}]:fill(self.dataset.vocabSize+1)
 			for i, idx in ipairs(indices:totable()) do
 				local sample = self.dataset:get(idx)
@@ -125,8 +125,7 @@ function DataLoader:run()
 				local input = self.preprocess(sample.input)
 				if not batch then
 					imageSize = input:size():totable()
-					if nCrops > 1 then table.remove(imageSize, 1) end
-					batch = torch.FloatTensor(sz, nCrops, table.unpack(imageSize))
+					batch = torch.FloatTensor(sz, table.unpack(imageSize))
 				end
 				batch[i]:copy(input)
 
@@ -153,7 +152,8 @@ function DataLoader:run()
 			collectgarbage()
 			idx = idx + batchsize
 			return {
-				input = batch:view(sz * nCrops, table.unpack(imageSize)),
+				input = batch,
+				-- output target size is batchsize * (seqLength + 1)
 				target = target,
 			}
 		else
@@ -165,10 +165,11 @@ function DataLoader:run()
 		while idx <= size and threads:acceptsjob() do
 			local indices = perm:narrow(1, idx, math.min(batchSize, size - idx + 1))
 			threads:addjob(
-				function(indices, nCrops, seqPerImg, seqLength)
+				function(indices, seqPerImg, seqLength)
 					local sz = indices:size(1)
 					local batch, imageSize
 					local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
+					-- insert the start sign (vocabSize+1)
 					target[{{},{1}}]:fill(self.dataset.vocabSize+1)
 					for i, idx in ipairs(indices:totable()) do
 						local sample = _G.dataset:get(idx)
@@ -177,8 +178,7 @@ function DataLoader:run()
 						local input = _G.preprocess(sample.input)
 						if not batch then
 							imageSize = input:size():totable()
-							if nCrops > 1 then table.remove(imageSize, 1) end
-							batch = torch.FloatTensor(sz, nCrops, table.unpack(imageSize))
+							batch = torch.FloatTensor(sz, table.unpack(imageSize))
 						end
 						batch[i]:copy(input)
 
@@ -204,7 +204,7 @@ function DataLoader:run()
 					end
 					collectgarbage()
 					return {
-						input = batch:view(sz * nCrops, table.unpack(imageSize)),
+						input = batch:view(sz, table.unpack(imageSize)),
 						target = target,
 					}
 				end,
@@ -212,7 +212,6 @@ function DataLoader:run()
 					sample = _sample_
 				end,
 				indices,
-				self.nCrops,
 				self.seqPerImg,
 				self.seqLength
 			)

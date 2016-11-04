@@ -9,7 +9,7 @@ local ffi = require 'ffi'
 local paths = require 'paths'
 
 local utils = require 'utils.utils'
-local caputils = require 'datasets.caputils'
+local caputils = require 'utils.caputils'
 
 local URL = 'http://msvocds.blob.core.windows.net/annotations-1-0-3/captions_train-val2014.zip'
 

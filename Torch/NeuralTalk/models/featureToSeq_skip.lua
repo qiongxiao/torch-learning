@@ -12,7 +12,7 @@ local lstmCell = require 'models.lstmCell'
 require 'models.expander'
 require 'models.dynamicLSTM'
 
-local netutils = require 'utils.netutils'
+
 
 local layer, parent = torch.class('nn.FeatureToSeq', 'nn.Module')
 
@@ -37,8 +37,6 @@ function layer:__init(opt, nFeatures, vocabSize)
 
 	self.inferenceMax = opt.inferenceMax
 	self.temperature = opt.temperature
-
-	netutils.linearInit(self.linear)
 
 end
 

@@ -9,12 +9,12 @@ local image = require 'image'
 local paths = require 'paths'
 local ffi = require 'ffi'
 
-local t = require 'datasets/image_transform'
+local t = require 'utils.imgTransform'
 
 local M = {}
 local Flickr8kDataset = torch.class('NeuralTalk.Flickr8kDataset', M)
 
-local function rebuiltCaption(data, vocab, opt)
+local function rebuiltCaption(data, vocab, devocab, opt)
 	local seqLength = opt.seqLength
 	local countThr = opt.wordCountThreshold
 	local goodWordCount = 0
@@ -23,15 +23,20 @@ local function rebuiltCaption(data, vocab, opt)
 			goodWordCount = goodWordCount + 1
 		end
 	end
-	data.imageCaptions = data.imageCaptions:clamp(1, goodWordCount+1):narrow(2, 1, seqLength)
-	return goodWordCount+1
+	local vocabSize = goodWordCount+1
+	-- since we number to word based on their count times therefore the word whose number is larger than goodWordCount is bad word and treat as UNK
+	data.imageCaptions = data.imageCaptions:clamp(1, vocabSize):narrow(2, 1, seqLength)
+	devocab[vocabSize] = 'UNK'
+	-- for decode: model output range from 1 to vocabiSize+1. If output is vocabSize+1, it means it is the end sign whose devocab should be nil
+	devocab[vocabSize+1] = nil
+	return vocabSize
 end
 
 function Flickr8kDataset:__init(imageInfo, opt, split)
 	self.imageInfo = imageInfo[split]
 	self.vocab = imageInfo.vocab
 	self.devocab = imageInfo.devocab
-	self.vocabSize = rebuiltCaption(self.imageInfo, imageInfo['vocab'], opt)
+	self.vocabSize = rebuiltCaption(self.imageInfo, self.vocab, self.devocab, opt)
 	self.opt = opt
 	self.split = split
 	self.dir = paths.concat(imageInfo['basedir'])
@@ -104,11 +109,10 @@ function Flickr8kDataset:preprocess()
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' or self.split == 'test' then
-			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
 			return t.Compose{
 				t.Scale(256),
 				t.ColorNormalize(meanstd, self.opt.cnnType),
-				Crop(224),
+				t.CenterCrop(224),
 			}
 		else
 			error('invalid split: ' .. self.split)
@@ -121,11 +125,10 @@ function Flickr8kDataset:preprocess()
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' or self.split == 'test' then
-			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
 			return t.Compose{
 				t.Scale(256),
 				t.ColorNormalize(meanstd, self.opt.cnnType),
-				Crop(224),
+				t.CenterCrop(224),
 			}
 		else
 			error('invalid split: ' .. self.split)

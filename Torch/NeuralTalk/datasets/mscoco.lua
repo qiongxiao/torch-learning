@@ -10,6 +10,8 @@ local image = require 'image'
 local paths = require 'paths'
 local ffi = require 'ffi'
 
+local t = require 'utils.imgTransform'
+
 local M = {}
 local MscocoDataset = torch.class('NeuralTalk.MscocoDataset', M)
 
@@ -104,11 +106,10 @@ function ImagenetDataset:preprocess()
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' then
-			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
 			return t.Compose{
 				t.Scale(256),
 				t.ColorNormalize(meanstd, self.opt.cnnType),
-				Crop(224),
+				t.CenterCrop(224),
 			}
 		else
 			error('invalid split: ' .. self.split)
@@ -121,11 +122,10 @@ function ImagenetDataset:preprocess()
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' then
-			local Crop = self.opt.tenCrop and t.TenCrop or t.CenterCrop
 			return t.Compose{
 				t.Scale(256),
 				t.ColorNormalize(meanstd, self.opt.cnnType),
-				Crop(224),
+				t.CenterCrop(224),
 			}
 		else
 			error('invalid split: ' .. self.split)

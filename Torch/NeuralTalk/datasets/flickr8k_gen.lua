@@ -8,7 +8,7 @@ require 'torch'
 local paths = require 'paths'
 
 local utils = require 'utils.utils'
-local caputils = require 'datasets.caputils'
+local caputils = require 'utils.caputils'
 
 local URL1 = 'http://nlp.cs.illinois.edu/HockenmaierGroup/Framing_Image_Description/Flickr8k_Dataset.zip'
 local URL2 = 'http://nlp.cs.illinois.edu/HockenmaierGroup/Framing_Image_Description/Flickr8k_text.zip'

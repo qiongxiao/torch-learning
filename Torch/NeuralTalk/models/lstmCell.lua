@@ -6,6 +6,8 @@
 require 'nn'
 require 'nngraph'
 
+local netutils = require 'utils.netutils'
+
 --[[
 	input: a table of 
 		1.	torch.Tensor of size "batchsize * inputSize"
@@ -78,7 +80,11 @@ local function lstmCell(inputSize, outputSize, hiddenStateSize, rDepth, dropout)
 	local logsoft = nn.LogSoftMax()(proj)
 	table.insert(outputs, logsoft)
 
-	return nn.gModule(inputs, outputs)
+	local cell = nn.gModule(inputs, outputs)
+
+	netutils.linearInit(cell)
+
+	return cell
 end
 
 return lstmCell

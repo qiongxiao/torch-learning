@@ -107,6 +107,7 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 
 		if finetune == 1 then
 			self.cnn:backward(self.input, self.feature2seq.gradInput[1])
+			self.cnnParams:clamp(-self.opt.gradClip, self.opt.gradClip)
 		end
 
 		if self.optimizer == 'sgd' then
@@ -149,7 +150,6 @@ function Trainer:test(epoch, dataloader)
 	local dataTimer = torch.Timer()
 	local size = dataloader:size()
 
-	local nCrops = self.opt.tenCrop and 10 or 1
 	local lossSum = 0.0
 	local N = 0
 
@@ -158,7 +158,7 @@ function Trainer:test(epoch, dataloader)
 	for n, sample in dataloader:run() do
 		local dataTime = dataTimer:time().real
 
-		local batchsize = sample.input:size(1) / nCrops
+		local batchsize = sample.input:size(1)
 		-- Copy input and target to the GPU
 		self:copyInputs(sample)
 
@@ -220,6 +220,8 @@ function Trainer:learningRate(epoch, model)
 			local decay = 0
 			if self.opt.dataset == 'mscoco' then
 				decay = math.floor((epoch - 1) / 30)
+			elseif self.opt.dataset == 'flickr8k' then
+				decay = math.floor((epoch - 1) / 25)
 			end
 			return self.opt.cnnLr * math.pow(0.1, decay)
 		else
@@ -231,8 +233,10 @@ function Trainer:learningRate(epoch, model)
 			local decay = 0
 			if self.opt.dataset == 'mscoco' then
 				decay = math.floor((epoch - 1) / 30)
+			elseif self.opt.dataset == 'flickr8k' then
+				decay = math.floor((epoch - 1) / 20)
 			end
-			return self.opt.lr * math.pow(0.1, decay)
+			return self.opt.lr * math.pow(0.9, decay)
 		else
 			local decay = math.floor((epoch - 1) / self.opt.decay_every)
 			return self.opt.lr * math.pow(self.opt.decay_factor, decay)

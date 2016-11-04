@@ -28,7 +28,6 @@ function M.parse(arg)
 	cmd:option('-maxEpochs',		0,			'Number of total epochs to run')
 	cmd:option('-batchsize',		16,			'mini-batch size (1 = pure stochastic)')
 	cmd:option('-testOnly',			'false',	'Run on validation set only')
-	cmd:option('-tenCrop',			'false',	'Ten-crop testing')
 	cmd:option('-finetune',			0,			'whether finetuning')
 	cmd:option('-finetuneAfter',	50,			'finetune after * epochs')
 	------------- Checkpoint options ------------------
@@ -39,7 +38,7 @@ function M.parse(arg)
 	cmd:option('-plotPath',			'plot/out',	'Path to output plot file (excluding .json)')
 	cmd:option('-plotEvery',		0,			'Whether to plot every iteration')
 	------------- Optimization options ----------------
-	cmd:option('-gradClip',			0.1,		'')
+	cmd:option('-gradClip',			0.1,		'clip gradients at this value (note should be lower than usual 5 because we normalize grads by both batch and seq_length)')
 	cmd:option('-optimizer',		'adam',		'optimizer algorithm: adam | sgd')
 	cmd:option('-lr',				4e-4,		'initial learning rate')
 	cmd:option('-lr_decay',			0,			'learning rate decay')
@@ -64,6 +63,7 @@ function M.parse(arg)
 	cmd:option('-resnetDepth',		34,			'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')
 	cmd:option('-shortcutType',		'',			'Options: A | B')
 	------------- lstm Model options -----------------------
+	cmd:option('-skipFlag',			'false',	'whether to skip after input seq is over')
 	cmd:option('-rDepth',			1,			'depth of lstm')
 	cmd:option('-encodingSize',		512,		'size of encoding of lstm input')
 	cmd:option('-hiddenStateSize',	512,		'size of hidden state in lstm')
@@ -79,8 +79,8 @@ function M.parse(arg)
 	local opt = cmd:parse(arg or {})
 
 	opt.testOnly = opt.testOnly ~= 'false'
-	opt.tenCrop = opt.tenCrop ~= 'false'
 	opt.resetCNNlastlayer = opt.resetCNNlastlayer ~= 'false'
+	opt.skipFlag = opt.skipFlag ~= 'false'
 
 	if not paths.dirp(opt.save) and not paths.mkdir(opt.save) then
 		cmd:error('error: unable to create checkpoint directory: ' .. opt.save .. '\n')

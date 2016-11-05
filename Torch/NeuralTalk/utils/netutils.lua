@@ -24,7 +24,7 @@ function netutils.linearInit(model)
 end
 
 function netutils.build_cnn(opt)
-	local cnn_raw = loadcaffe.load(opt.cnnProto, opt.cnnCaffe, 'nn')
+	local cnn_raw = loadcaffe.load(opt.cnnProto, opt.cnnCaffe, opt.backendCaffe)
 
 	-- copy over the first layer_num layers of the CNN
 	local cnn_part = nn.Sequential()

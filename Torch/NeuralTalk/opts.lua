@@ -18,8 +18,10 @@ function M.parse(arg)
 	cmd:option('-data',			'',				'Path to dataset')
 	cmd:option('-dataset',		'mscoco',		'Options: flickr8k | mscoco')
 	cmd:option('-manualSeed',	123,			'Manually set RNG seed')
+	cmd:option('-backend',		'cudnn',		'Option: cudnn | nn')
+	cmd:option('-verbose',		'true',		'whether verbose a example prediction caption for every val batch: false | true')
 	------------- Data options ------------------------
-	cmd:option('-dataAug',				0,		'whether augment data')
+	cmd:option('-dataAug',				0,		'whether augment data : 0 (false) | 1 (true)')
 	cmd:option('-nThreads',				1,		'number of data loading threads, positve integer')
 	cmd:option('-seqLength',			30,		'length of caption, positve integer')
 	cmd:option('-seqPerImg',			5,		'number of captions per image, positve integer')
@@ -28,46 +30,39 @@ function M.parse(arg)
 	cmd:option('-maxEpochs',		0,			'Number of total epochs to run')
 	cmd:option('-batchsize',		16,			'mini-batch size (1 = pure stochastic)')
 	cmd:option('-testOnly',			'false',	'Run on validation set only')
-	cmd:option('-finetune',			0,			'whether finetuning')
-	cmd:option('-finetuneAfter',	50,			'finetune after * epochs')
+	cmd:option('-finetuneAfter',	-1,			'finetune after * epochs: -1 disable | positve integer')
 	------------- Checkpoint options ------------------
 	cmd:option('-save',			'checkpoints',	'Directory in which to save checkpoints')
 	cmd:option('-resume',		'none',			'Resume from the latest checkpoint in this directory')
-	cmd:option('-checkEvery',	1,				'checkpoint every epcoh #')
+	cmd:option('-checkEvery',	1,				'checkpoint every # epcoh: -1 disable | positve integer')
 	------------- Plotting options --------------------
 	cmd:option('-plotPath',			'plot/out',	'Path to output plot file (excluding .json)')
 	cmd:option('-plotEvery',		0,			'Whether to plot every iteration')
 	------------- Optimization options ----------------
 	cmd:option('-gradClip',			0.1,		'clip gradients at this value (note should be lower than usual 5 because we normalize grads by both batch and seq_length)')
+	cmd:option('-decay',			'default',	'using external decay parameter on lstm')
+	cmd:option('-decay_every',		100,		'external learning rate decay')
+	cmd:option('-decay_factor',		0.5,		'external learning rate decay factor')
+	------------- lstm Optimization options ----------------
 	cmd:option('-optimizer',		'adam',		'lstm optimizer algorithm: adam | sgd')
 	cmd:option('-lr',				4e-4,		'lstm initial learning rate')
 	cmd:option('-lr_decay',			0,			'lstm learning rate decay')
-	cmd:option('-weightDecay',		1e-4,		'lstm weight decay')
+	cmd:option('-weightDecay',		0,			'lstm weight decay')
 	cmd:option('-momentum',			0.9,		'lstm momentum, for sgd')
-	cmd:option('-optimAlpha',		0.8,		'alpha for adam')
-	cmd:option('-optimBeta',		0.999,		'beta used for adam')
-	cmd:option('-decay',			'default',	'lstm using external decay parameter on lstm')
-	cmd:option('-decay_every',		100,		'lstm external learning rate decay')
-	cmd:option('-decay_factor',		0.5,		'lstm external learning rate decay factor')
+	cmd:option('-optimAlpha',		0.8,		'lstm alpha for adam')
+	cmd:option('-optimBeta',		0.999,		'lstm beta used for adam')
 	------------- cnn Optimization options ----------------
 	cmd:option('-cnnOptimizer',		'adam',		'cnn optimizer algorithm: adam | sgd')
-	cmd:option('-cnnLr',			1e-5,		'initial cnn learning rate')
+	cmd:option('-cnnLr',			1e-5,		'cnn initial learning rate')
 	cmd:option('-cnnLr_decay',		0,			'cnn learning rate decay')
 	cmd:option('-cnnWeigthDecay',	0,			'cnn weight decay')
 	cmd:option('-cnnMomentum',		0.9,		'cnn momentum, for sgd')
-	cmd:option('-cnnOptimAlpha',	0.8,		'alpha for momentum of CNN')
-	cmd:option('-cnnOptimBeta',		0.999,		'beta for momentum of CNN')
-	cmd:option('-cnnDecay',			'default',	'cnn using external decay parameter on cnn')
-	cmd:option('-cnnDecay_every',	25,			'external learning rate decay')
-	cmd:option('-cnnDecay_factor',	0.5,		'external learning rate decay factor')	
+	cmd:option('-cnnOptimAlpha',	0.8,		'cnn alpha for momentum of CNN')
+	cmd:option('-cnnOptimBeta',		0.999,		'cnn beta for momentum of CNN')
 	------------- cnn Model options -----------------------
 	cmd:option('-cnnType',			'vggnet',   'Options: resnet | vggnet')
-	cmd:option('-cnnFCdropout',		0.5,		'dropout for cnn fully-connected layer')
-	cmd:option('-cnnCONVdropout',	0.5,		'dropout for cnn convolution layer')
-	cmd:option('-resnetDepth',		34,			'ResNet depth: 18 | 34 | 50 | 101 | ...', 'number')
-	cmd:option('-shortcutType',		'',			'ResNet Options: A | B')
 	------------- lstm Model options -----------------------
-	cmd:option('-skipFlag',			'false',	'whether to skip after input seq is over')
+	cmd:option('-skipFlag',			'false',	'whether to skip when input seq is over')
 	cmd:option('-rDepth',			1,			'depth of lstm')
 	cmd:option('-encodingSize',		512,		'size of encoding of lstm input')
 	cmd:option('-hiddenStateSize',	512,		'size of hidden state in lstm')
@@ -80,13 +75,15 @@ function M.parse(arg)
 	cmd:option('-cnnCaffe',			'none',		'Path to caffe cnn model to retrain with')
 	cmd:option('-cnnProto',			'none',		'Path to caffe cnn model prototxt')
 	cmd:option('-cnnCaffelayernum',	38,			'the layer number of last feature layer in caffe cnn model')
+	cmd:option('-backendCaffe',		'nn',		'Options: cudnn | nn (for caffe load)')
 	cmd:option('-cnnFeatures',		4096,		'the feature number of last feature layer in cnn model')
-	
+
 
 	cmd:text()
 
 	local opt = cmd:parse(arg or {})
 
+	opt.verbose = opt.verbose ~= 'false'
 	opt.testOnly = opt.testOnly ~= 'false'
 	opt.resetCNNlastlayer = opt.resetCNNlastlayer ~= 'false'
 	opt.skipFlag = opt.skipFlag ~= 'false'
@@ -115,6 +112,14 @@ function M.parse(arg)
 
 	if opt.nThreads < 1 then
 		cmd:error('error: invalid threads number')
+	end
+
+	if opt.backend ~= 'cudnn' and opt.backend~= 'nn' then
+		cmd:error('error: invalid backend '.. opt.backend)
+	end
+
+	if opt.finetuneAfter == 0 then
+		cmd:error('error: invalid finetuneAfter value')
 	end
 
 	return opt

@@ -28,12 +28,15 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 			momentum = opt.momentum,
 			nesterov = true,
 			dampening = 0.0
+
 		}
 	elseif self.lstmOptimizer == 'adam' then
 		lstmOptimConfig = optimConfig and optimConfig.lstm or {
 			learningRate = opt.lr,
 			learningRateDecay = opt.lr_decay,
 			weigthDecay = opt.weigthDecay
+			beta1 = opt.optimAlpha
+			beta2 = opt.optimBeta
 		}
 	else
 		error('invalid optimizer ' .. opt.optimizer)
@@ -55,6 +58,8 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 			learningRate = opt.cnnLr,
 			learningRateDecay = opt.cnnLr_decay,
 			weigthDecay = opt.cnnWeigthDecay
+			beta1 = opt.cnnOptimAlpha
+			beta2 = opt.cnnOptimBeta
 		}
 	else
 		error('invalid cnnOptimizer ' .. opt.cnnOptimizer)
@@ -102,7 +107,7 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 		local loss = self.criterion:forward(self.feature2seq.output, self.target)
 
 		self.feature2seq:zeroGradParameters()
-		if finetune == 1 then
+		if finetune then
 			self.cnn:zeroGradParameters()
 		end
 
@@ -111,7 +116,7 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 
 		self.params:clamp(-self.opt.gradClip, self.opt.gradClip)
 
-		if finetune == 1 then
+		if finetune then
 			self.cnn:backward(self.input, self.feature2seq.gradInput[1])
 			self.cnnParams:clamp(-self.opt.gradClip, self.opt.gradClip)
 		end
@@ -122,7 +127,7 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 			optim.adam(feval, self.params, self.optimConfig.lstm)
 		end
 
-		if finetune == 1 then
+		if finetune then
 			if self.cnnOptimizer == 'sgd' then
 				optim.sgd(cnnFeval, self.cnnParams, self.optimConfig.cnn)
 			else
@@ -178,9 +183,12 @@ function Trainer:test(epoch, dataloader)
 		N = N + batchsize
 
 		local seq = self.feature2seq:inference(self.cnn.output)
-		local out = dataloader:decode(seq)
-		print(out[1])
-
+		local out = dataloader:decode(seq, sample.path)
+		
+		if self.opt.verbose then
+			print(out[1].caption)
+		end
+		
 		print((' | eval: [%d][%d/%d]    Time %.3f  Data %.3f  Loss %1.4f'):format(
 			epoch, n, size, timer:time().real, dataTime, loss))
 
@@ -197,22 +205,24 @@ function Trainer:test(epoch, dataloader)
 	return lossSum / N, out
 end
 
-function Trainer:inference(imgs, dataloader)
+function Trainer:inference(dataloader)
 
 	self.cnn:evaluate()
 	self.feature2seq:evaluate()
 
-	imgs:cuda()
+	for n, sample in dataloader:run() do
+		local imgs = sample.input:cuda()
 
-	self.cnn:forward(imgs)
-	local seq = self.feature2seq:inference(self.cnn.output)
-	seq = dataloader:decode(seq)
-
+		self.cnn:forward(imgs)
+		local seq = self.feature2seq:inference(self.cnn.output)
+		local out = dataloader:decode(seq, sample.path)
+	end
+		
 	self.cnn:training()
 	self.feature2seq:training()
 
 	collectgarbage()
-	return seq
+	return out
 end
 
 function Trainer:copyInputs(sample)
@@ -225,34 +235,27 @@ function Trainer:copyInputs(sample)
 end
 
 function Trainer:learningRate(epoch, mode)
-	-- Training schedule
-	if mode == 'cnn' then
-		if self.opt.cnnDecay == 'default' then
-			local decay = 0
-			if self.opt.dataset == 'mscoco' then
-				decay = math.floor((epoch - 1) / 30)
-			elseif self.opt.dataset == 'flickr8k' then
-				decay = math.floor((epoch - 1) / 25)
-			end
-			return self.opt.cnnLr * math.pow(0.1, decay)
+	if self.opt.decay == 'default' then
+		local decay = 0
+		if self.opt.dataset == 'mscoco' then
+			decay = math.floor((epoch - 1) / 30)
+		elseif self.opt.dataset == 'flickr8k' then
+			decay = math.floor((epoch - 1) / 100)
+		end
+		if mode == 'cnn' then
+			return self.opt.cnnLr * math.pow(0.5, decay)
 		else
-			local decay = math.floor((epoch - 1) / self.opt.cnnDecay_every)
-			return self.opt.cnnLr * math.pow(self.opt.cnnDecay_factor, decay)
+			return self.opt.lr * math.pow(0.5, decay)
 		end
 	else
-		if self.opt.decay == 'default' then
-			local decay = 0
-			if self.opt.dataset == 'mscoco' then
-				decay = math.floor((epoch - 1) / 30)
-			elseif self.opt.dataset == 'flickr8k' then
-				decay = math.floor((epoch - 1) / 20)
-			end
-			return self.opt.lr * math.pow(0.9, decay)
+		local decay = math.floor((epoch - 1) / self.opt.decay_every)
+		if mode == 'cnn' then 
+			return self.opt.cnnLr * math.pow(self.opt.decay_factor, decay)
 		else
-			local decay = math.floor((epoch - 1) / self.opt.decay_every)
 			return self.opt.lr * math.pow(self.opt.decay_factor, decay)
 		end
 	end
+
 end
 
 return M.Trainer

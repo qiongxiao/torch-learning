@@ -53,6 +53,7 @@ function Flickr8kDataset:get(i)
 	return {
 		input = image,
 		target = captions,
+		path = path,
 	}
 end
 

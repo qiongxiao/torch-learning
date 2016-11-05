@@ -82,7 +82,7 @@ end
 --	input:
 --		torch.Tensor of size batchsize * seqLength
 --]]
-function DataLoader:decode(seq)
+function DataLoader:decode(seq, paths)
 	local batchsize, seqLength = seq:size(1), seq:size(2)-1
 	local out = {}
 	for i = 1, batchsize do
@@ -95,7 +95,7 @@ function DataLoader:decode(seq)
 			if j >= 2 then txt = txt .. ' ' end
 			txt = txt .. word
 		end
-		table.insert(out, txt)
+		table.insert(out, {file_path = paths[i], caption = txt})
 	end
 	return out
 end
@@ -114,10 +114,13 @@ function DataLoader:run()
 			-- choose indices inside batch
 			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1)):long()
 			local sz = indices:size(1)
+
+			local paths = {}
 			local batch, imageSize
 			local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
 			-- insert the start sign (vocabSize+1)
 			target[{{},{1}}]:fill(self.dataset.vocabSize+1)
+
 			for i, idx in ipairs(indices:totable()) do
 				local sample = self.dataset:get(idx)
 
@@ -148,6 +151,9 @@ function DataLoader:run()
 
 				local startIdx = (i - 1) * seqPerImg
 				target[{{startIdx+1, startIdx+seqPerImg},{2, 1+seqLength}}] = seq
+				for j = 1, seqPerImg do
+					table.insert(paths, sample.path)
+				end
 			end
 			collectgarbage()
 			idx = idx + batchsize
@@ -155,6 +161,7 @@ function DataLoader:run()
 				input = batch,
 				-- output target size is batchsize * (seqLength + 1)
 				target = target,
+				path = paths
 			}
 		else
 			return nil
@@ -167,10 +174,13 @@ function DataLoader:run()
 			threads:addjob(
 				function(indices, seqPerImg, seqLength)
 					local sz = indices:size(1)
+
+					local paths = {}
 					local batch, imageSize
 					local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
 					-- insert the start sign (vocabSize+1)
 					target[{{},{1}}]:fill(self.dataset.vocabSize+1)
+
 					for i, idx in ipairs(indices:totable()) do
 						local sample = _G.dataset:get(idx)
 
@@ -201,11 +211,16 @@ function DataLoader:run()
 
 						local startIdx = (i - 1) * seqPerImg
 						target[{{startIdx+1, startIdx+seqPerImg},{2, 1+seqLength}}] = seq
+
+						for j = 1, seqPerImg do
+							table.insert(paths, sample.path)
+						end
 					end
 					collectgarbage()
 					return {
 						input = batch:view(sz, table.unpack(imageSize)),
 						target = target,
+						path = paths
 					}
 				end,
 				function(_sample_)

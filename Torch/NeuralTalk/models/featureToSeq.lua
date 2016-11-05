@@ -3,6 +3,7 @@
 --  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LanguageModel.lua'
 --
 --]]
+require 'nn'
 
 require 'models.expander'
 require 'models.dynamicLSTM'
@@ -15,7 +16,16 @@ function layer:__init(opt, nFeatures, vocabSize)
 	parent.__init(self)
 
 	self.nFeatures = nFeatures
-	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(cudnn:ReLU(true))
+
+	local backend
+	if opt.backend == 'cudnn' then
+		require 'cudnn'
+		backend = cudnn
+	else
+		backend = nn
+	end
+
+	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend:ReLU(true))
 	self.expander = nn.Expander(opt.seqPerImg)
 
 	self.vocabSize = vocabSize

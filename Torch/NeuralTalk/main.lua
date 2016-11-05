@@ -46,8 +46,9 @@ if opt.testOnly then
 	else
 		loader = valLoader
 	end
-	local _, out = trainer:test(0, loader)
-	--utils.writeJson('predict_caption.json', out)
+	local testLoss, out = trainer:test(0, loader)
+	print('<Testing> * Loss:', testLoss)
+	utils.writeJson('predict_caption.json', out)
 	return
 end
 
@@ -56,16 +57,16 @@ local bestLoss = math.huge
 for epoch = startEpoch, opt.maxEpochs do
 	-- Train for a single epoch
 
-	local finetune = 0
-	if opt.finetune == 1 and epoch >= opt.finetuneAfter then
-		finetune = 1
+	local finetune = false
+	if opt.finetuneAfter > 0 and epoch >= opt.finetuneAfter then
+		finetune = true
 	end
 
 	local trainLoss
 	trainLoss = trainer:train(epoch, trainLoader, finetune, plotter)
 
 	-- Run model on validation set
-	local testLoss, out = trainer:test(epoch, valLoader)
+	local testLoss, _ = trainer:test(epoch, valLoader)
 
 	local bestModel = false
 	if testLoss < bestLoss then
@@ -88,6 +89,7 @@ for epoch = startEpoch, opt.maxEpochs do
 end
 
 if (opt.dataset == 'flickr8k') then
-	local testLoss, _ = trainer:test(0, testLoader)
+	local testLoss, out = trainer:test(0, testLoader)
 	print('<Testing> * Loss:', testLoss)
+	utils.writeJson('test_predict_caption.json', out)
 end

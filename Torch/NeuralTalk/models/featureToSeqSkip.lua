@@ -3,10 +3,7 @@
 --  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LanguageModel.lua'
 --
 --]]
-
-require 'cutorch'
 require 'nn'
-require 'cudnn'
 
 local netutils = require 'utils.netutils'
 
@@ -19,8 +16,15 @@ function layer:__init(opt, nFeatures, vocabSize)
 	parent.__init(self)
 
 	self.nFeatures = nFeatures
-	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(cudnn:ReLU(true))
+	local backend
+	if opt.backend == 'cudnn' then
+		require 'cudnn'
+		backend = cudnn
+	else
+		backend = nn
+	end
 
+	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend:ReLU(true))
 	self.expander = nn.Expander(opt.seqPerImg)
 
 	self.vocabSize = vocabSize
@@ -70,6 +74,8 @@ end
 function layer:getModulesList()
 	return {self.linear, self.expander, self.lstmCell, self.lookupTable}
 end
+
+
 
 function layer:parameters()
 	local p0,g0 = self.linear:parameters()

@@ -41,10 +41,10 @@ function checkpoint.loadLatestInfo(opt)
 	return latest_info, optimState
 end
 
-function checkpoint.saveModel(epoch, modelc, modelf, optimState, isBestModel, opt)
+function checkpoint.saveModel(epoch, model, optimState, isBestModel, opt)
 	-- create a clean copy on the CPU without modifying the original network
-	local cnn = deepCopy(modelc):float():clearState()
-	local feature2seq = deepCopy(modelf):float():clearState()
+	local cnn = deepCopy(model.cnn):float():clearState()
+	local feature2seq = deepCopy(model.feature2seq):float():clearState()
 	print("saving 1")
 	local cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
 	local seqModelFile = 'model_seq' .. epoch .. '.t7'

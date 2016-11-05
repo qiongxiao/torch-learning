@@ -75,8 +75,13 @@ function M.parse(arg)
 	cmd:option('-inferenceMax',		1,			'using argmax algorithm to get word')
 	cmd:option('-temperature',		1,			'using normal sample algorithm to get word')
 	------------- Model options -----------------------
-	cmd:option('-retrain',			'none',		'Path to cnn model to retrain with')
+	cmd:option('-retrain',			'none',		'Path to cnn model (t7) to retrain with')
 	cmd:option('-resetCNNlastlayer','false',	'Reset the fully connected layer for fine-tuning')
+	cmd:option('-cnnCaffe',			'none',		'Path to caffe cnn model to retrain with')
+	cmd:option('-cnnProto',			'none',		'Path to caffe cnn model prototxt')
+	cmd:option('-cnnCaffelayernum',	38,			'the layer number of last feature layer in caffe cnn model')
+	cmd:option('-cnnFeatures',		4096,		'the feature number of last feature layer in cnn model')
+	
 
 	cmd:text()
 

@@ -10,6 +10,8 @@ require 'nn'
 require 'cunn'
 require 'cudnn'
 
+local netutils = require 'utils.netutils'
+
 require 'models.seqCrossEntropyCriterion'
 
 local M = {}
@@ -25,6 +27,13 @@ function M.setup(opt, vocabSize, checkpoint)
 		assert(paths.filep(opt.retrain), 'File not found: ' .. opt.retrain)
 		print('<model init> => Loading cnn model from file: ' .. opt.retrain)
 		cnn = torch.load(opt.retrain)
+	elseif opt.cnnCaffe ~= 'none' then
+		assert(paths.filep(opt.cnnCaffe), 'File not found: ' .. opt.cnnCaffe)
+		assert(paths.filep(opt.cnnProto), 'File not found: ' .. opt.cnnProto)
+		print('<model init> => Loading caffe model from file: ' .. opt.cnnCaffe)
+		cnn = netutils.build_cnn(opt)
+		--print('<model init> => Saving caffe model to t7 file')
+		--torch.save(opt.cnnCaffe .. '.t7', cnn)
 	else
 		--print('<model init> => Creating cnn model from file: models/' .. opt.cnnType .. '.lua')
 		--cnn, nFeatures = require('models.' .. opt.cnnType)(opt)
@@ -46,9 +55,10 @@ function M.setup(opt, vocabSize, checkpoint)
 
 			nFeatures = orig.weight:size(2)
 			cnn:remove(#cnn.modules)
+			cnn:add(nn.Dropout(opt.cnnFCdropout))
 		else
 			-- if cnn model already ends at feature layer
-			nFeatures = opt.nFeatures
+			nFeatures = opt.cnnFeatures
 		end
 	end
 

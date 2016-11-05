@@ -77,16 +77,39 @@ function M.setup(opt, vocabSize, checkpoint)
 		require 'models.featureToSeqSkip'
 		feature2seq = nn.FeatureToSeqSkip(opt, nFeatures, vocabSize)
 	end
-	
-	cnn:cuda()
-	feature2seq:cuda()
-
-	-- Set the CUDNN flags
-	cudnn.fastest = true
-	cudnn.benchmark = true
 
 	local criterion = nn.SeqCrossEntropyCriterion()
-	criterion:cuda()
+
+	if opt.nGPU < 1 then
+		cnn:float()
+		feature2seq:float()
+		criterion:float()
+	-- Wrap the model with DataParallelTable, if using more than one GPU
+	elseif opt.nGPU > 1 then
+		local gpus = torch.range(1, opt.nGPU):totable()
+		local fastest, benchmark = cudnn.fastest, cudnn.benchmark
+
+		local dpt = nn.DataParallelTable(1, true, true)
+			:add(cnn, gpus)
+			:threads(function()
+				local cudnn = require 'cudnn'
+				cudnn.fastest, cudnn.benchmark = fastest, benchmark
+			end)
+		dpt.gradInput = nil
+		-- Set the CUDNN flags
+		cudnn.fastest = true
+		cudnn.benchmark = true
+		cnn = dpt:cuda()
+		feature2seq:cuda()
+		criterion:cuda()
+	else
+		-- Set the CUDNN flags
+		cudnn.fastest = true
+		cudnn.benchmark = true
+		cnn:cuda()
+		feature2seq:cuda()
+		criterion:cuda()
+	end
 
 	local model = {}
 	model.cnn = cnn

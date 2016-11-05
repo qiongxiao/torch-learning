@@ -25,7 +25,7 @@ local function rebuiltCaption(data, vocab, devocab, opt)
 	end
 	local vocabSize = goodWordCount+1
 	-- since we number to word based on their count times therefore the word whose number is larger than goodWordCount is bad word and treat as UNK
-	data.imageCaptions = data.imageCaptions:clamp(1, vocabSize):narrow(2, 1, seqLength)
+	data.imageCaptions = data.imageCaptions:clamp(0, vocabSize):narrow(2, 1, seqLength)
 	devocab[vocabSize] = 'UNK'
 	-- for decode: model output range from 1 to vocabiSize+1. If output is vocabSize+1, it means it is the end sign whose devocab should be nil
 	devocab[vocabSize+1] = nil

@@ -25,7 +25,7 @@ function layer:__init(opt, nFeatures, vocabSize)
 		backend = nn
 	end
 
-	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend:ReLU(true))
+	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend.ReLU(true))
 	self.expander = nn.Expander(opt.seqPerImg)
 
 	self.vocabSize = vocabSize
@@ -103,6 +103,7 @@ function layer:updateOutput(input)
 	local batchsize = seq:size(1)
 
 	-- seqEncoded's size is "batchsize * (seqLength+1) * encodingSize"
+	seq[torch.eq(seq, 0)] = self.vocabSize+1
 	local seqEncoded = self.lookupTable:forward(seq)
 	-- lstmInput's size is "batchsize * (seqLength+2) * encodingSize"
 	self.lstmInput = torch.cat({feats:view(batchsize, 1, self.encodingSize), seqEncoded}, 2)

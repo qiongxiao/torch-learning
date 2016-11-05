@@ -15,11 +15,12 @@ function M.parse(arg)
 	cmd:text()
 	cmd:text('Options:')
 	------------- General options ---------------------
-	cmd:option('-data',			'',				'Path to dataset')
-	cmd:option('-dataset',		'mscoco',		'Options: flickr8k | mscoco')
-	cmd:option('-manualSeed',	123,			'Manually set RNG seed')
-	cmd:option('-backend',		'cudnn',		'Option: cudnn | nn')
+	cmd:option('-data',			'',			'Path to dataset')
+	cmd:option('-dataset',		'mscoco',	'Options: flickr8k | mscoco')
+	cmd:option('-manualSeed',	123,		'Manually set RNG seed')
+	cmd:option('-backend',		'cudnn',	'Option: cudnn | nn')
 	cmd:option('-verbose',		'true',		'whether verbose a example prediction caption for every val batch: false | true')
+	cmd:option('-nGPU',			1,			'GPU number: 0 CPU | positve integer')
 	------------- Data options ------------------------
 	cmd:option('-dataAug',				0,		'whether augment data : 0 (false) | 1 (true)')
 	cmd:option('-nThreads',				1,		'number of data loading threads, positve integer')
@@ -61,6 +62,7 @@ function M.parse(arg)
 	cmd:option('-cnnOptimBeta',		0.999,		'cnn beta for momentum of CNN')
 	------------- cnn Model options -----------------------
 	cmd:option('-cnnType',			'vggnet',   'Options: resnet | vggnet')
+	cmd:option('-cnnFCdropout',		0.5,		'From feature layer to encoding layer')
 	------------- lstm Model options -----------------------
 	cmd:option('-skipFlag',			'false',	'whether to skip when input seq is over')
 	cmd:option('-rDepth',			1,			'depth of lstm')
@@ -120,6 +122,10 @@ function M.parse(arg)
 
 	if opt.finetuneAfter == 0 then
 		cmd:error('error: invalid finetuneAfter value')
+	end
+
+	if opt.nGPU < 1 and (opt.backend == 'cudnn' or opt.backendCaffe == 'cudnn') then
+		cmd:error('error: CPU mode has no cudnn backend')
 	end
 
 	return opt

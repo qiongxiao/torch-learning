@@ -24,7 +24,7 @@ function layer:__init(opt, nFeatures, vocabSize)
 		backend = nn
 	end
 
-	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend:ReLU(true))
+	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend.ReLU(true))
 	self.expander = nn.Expander(opt.seqPerImg)
 
 	self.vocabSize = vocabSize
@@ -153,7 +153,7 @@ function layer:updateOutput(input)
 			if torch.sum(it) == 0 then
 				canSkip = true
 			end
-			it[torch.eq(it, 0)] = 1
+			it[torch.eq(it, 0)] = self.vocabSize+1
 
 			if not canSkip then
 				self.lookupTablesInputs[t] = it
@@ -183,7 +183,7 @@ function layer:updateGradInput(input, gradOutput)
 	for t = self.tmax, 1, -1 do
 		local dout = {}
 		for k=1, #dstate[t] do table.insert(dout, dstate[t][k]) end
-		table.insert(dout, gradOutput:transpose(1, 2))
+		table.insert(dout, gradOutput[{{},{t}}]:squeeze())
 		local dinputs = self.slices[t]:backward(self.inputs[t], dout)
 		local dxt = dinputs[1]
 		dstate[t-1]={}

@@ -16,7 +16,7 @@ local Trainer = torch.class('cnn.Trainer', M)
 
 function Trainer:__init(model, criterion, opt, optimConfig)
 	self.cnn, self.feature2seq = model.cnn, model.feature2seq
-	self.criterion = criterion:cuda()
+	self.criterion = criterion
 
 	self.lstmOptimizer = opt.optimizer
 	local lstmOptimConfig
@@ -27,16 +27,16 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 			weigthDecay = opt.weigthDecay,
 			momentum = opt.momentum,
 			nesterov = true,
-			dampening = 0.0
+			dampening = 0.0,
 
 		}
 	elseif self.lstmOptimizer == 'adam' then
 		lstmOptimConfig = optimConfig and optimConfig.lstm or {
 			learningRate = opt.lr,
 			learningRateDecay = opt.lr_decay,
-			weigthDecay = opt.weigthDecay
-			beta1 = opt.optimAlpha
-			beta2 = opt.optimBeta
+			weigthDecay = opt.weigthDecay,
+			beta1 = opt.optimAlpha,
+			beta2 = opt.optimBeta,
 		}
 	else
 		error('invalid optimizer ' .. opt.optimizer)
@@ -51,15 +51,15 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 			weigthDecay = opt.cnnWeigthDecay,
 			momentum = opt.cnnMomentum,
 			nesterov = true,
-			dampening = 0.0
+			dampening = 0.0,
 		}
 	elseif self.cnnOptimizer == 'adam' then
 		cnnOptimConfig = optimConfig and optimConfig.cnn or {
 			learningRate = opt.cnnLr,
 			learningRateDecay = opt.cnnLr_decay,
-			weigthDecay = opt.cnnWeigthDecay
-			beta1 = opt.cnnOptimAlpha
-			beta2 = opt.cnnOptimBeta
+			weigthDecay = opt.cnnWeigthDecay,
+			beta1 = opt.cnnOptimAlpha,
+			beta2 = opt.cnnOptimBeta,
 		}
 	else
 		error('invalid cnnOptimizer ' .. opt.cnnOptimizer)
@@ -103,6 +103,7 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 		self:copyInputs(sample)
 
 		self.cnn:forward(self.input)
+
 		self.feature2seq:forward{self.cnn.output, self.target}
 		local loss = self.criterion:forward(self.feature2seq.output, self.target)
 
@@ -112,7 +113,7 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 		end
 
 		self.criterion:backward(self.feature2seq.output, self.target)
-		self.feature2seq:backward({self.cnn.output, self.target}, self.criterion.gradInput)--:cuda())
+		self.feature2seq:backward({self.cnn.output, self.target}, self.criterion.gradInput)
 
 		self.params:clamp(-self.opt.gradClip, self.opt.gradClip)
 
@@ -205,33 +206,18 @@ function Trainer:test(epoch, dataloader)
 	return lossSum / N, out
 end
 
-function Trainer:inference(dataloader)
-
-	self.cnn:evaluate()
-	self.feature2seq:evaluate()
-
-	for n, sample in dataloader:run() do
-		local imgs = sample.input:cuda()
-
-		self.cnn:forward(imgs)
-		local seq = self.feature2seq:inference(self.cnn.output)
-		local out = dataloader:decode(seq, sample.path)
-	end
-		
-	self.cnn:training()
-	self.feature2seq:training()
-
-	collectgarbage()
-	return out
-end
-
 function Trainer:copyInputs(sample)
-	-- Copies the input to a CUDA tensor, if using 1 GPU, or to pinned memory,
-	-- if using DataParallelTable. The target is always copied to a CUDA tensor
-	self.input = self.input or torch.CudaTensor()
-	self.target = self.target or (torch.CudaLongTensor and torch.CudaLongTensor() or torch.CudaTensor())
-	self.input:resize(sample.input:size()):copy(sample.input)
-	self.target:resize(sample.target:size()):copy(sample.target)
+	if self.opt.nGPU < 1 then
+		self.input = sample.input
+		self.target = sample.target
+	else
+		-- Copies the input to a CUDA tensor, if using 1 GPU, or to pinned memory,
+		-- if using DataParallelTable. The target is always copied to a CUDA tensor
+		self.input = self.input or (self.opt.nGPU == 1 and torch.CudaTensor() or cutorch.createCudaHostTensor())
+		self.target = self.target or (torch.CudaLongTensor and torch.CudaLongTensor()or torch.CudaTensor())
+		self.input:resize(sample.input:size()):copy(sample.input)
+		self.target:resize(sample.target:size()):copy(sample.target)
+	end
 end
 
 function Trainer:learningRate(epoch, mode)

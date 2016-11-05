@@ -49,6 +49,7 @@ function DataLoader:__init(dataset, opt, split)
 		self.__size = dataset:size()
 		self.dataset = dataset
 		self.preprocess = dataset:preprocess()
+		self.vocabSize = self.dataset.vocabSize
 	else
 		local manualSeed = opt.manualSeed
 		local function init()
@@ -61,12 +62,13 @@ function DataLoader:__init(dataset, opt, split)
 			torch.setnumthreads(1)
 			_G.dataset = dataset
 			_G.preprocess = dataset:preprocess()
-			return dataset:size()
+			return dataset:size(), dataset.vocabSize
 		end
 
 		local threads, sizes = Threads(opt.nThreads, init, main)
 		self.threads = threads
 		self.__size = sizes[1][1]
+		self.vocabSize = sizes[1][2]
 	end
 end
 
@@ -75,7 +77,7 @@ function DataLoader:size()
 end
 
 function DataLoader:getVocabSize()
-	return self.dataset.vocabSize
+	return self.vocabSize
 end
 
 --[[
@@ -119,7 +121,7 @@ function DataLoader:run()
 			local batch, imageSize
 			local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
 			-- insert the start sign (vocabSize+1)
-			target[{{},{1}}]:fill(self.dataset.vocabSize+1)
+			target[{{},{1}}]:fill(self.vocabSize+1)
 
 			for i, idx in ipairs(indices:totable()) do
 				local sample = self.dataset:get(idx)
@@ -169,9 +171,9 @@ function DataLoader:run()
 	end
 
 	local function enqueue()
-		while idx <= size and threads:acceptsjob() do
-			local indices = perm:narrow(1, idx, math.min(batchSize, size - idx + 1))
-			threads:addjob(
+		while idx <= size and self.threads:acceptsjob() do
+			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1))
+			self.threads:addjob(
 				function(indices, seqPerImg, seqLength)
 					local sz = indices:size(1)
 
@@ -179,7 +181,7 @@ function DataLoader:run()
 					local batch, imageSize
 					local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
 					-- insert the start sign (vocabSize+1)
-					target[{{},{1}}]:fill(self.dataset.vocabSize+1)
+					target[{{},{1}}]:fill(self.vocabSize+1)
 
 					for i, idx in ipairs(indices:totable()) do
 						local sample = _G.dataset:get(idx)
@@ -217,10 +219,11 @@ function DataLoader:run()
 						end
 					end
 					collectgarbage()
+
 					return {
 						input = batch:view(sz, table.unpack(imageSize)),
 						target = target,
-						path = paths
+						path = paths,
 					}
 				end,
 				function(_sample_)

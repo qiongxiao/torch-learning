@@ -8,6 +8,7 @@
 
 local nn = require 'nn'
 require 'cunn'
+local cudnn = require 'cudnn'
 
 local Convolution = cudnn.SpatialConvolution
 local Avg = cudnn.SpatialAveragePooling
@@ -96,7 +97,7 @@ local function createModel(opt)
 	local model = nn.Sequential()
 	local g_nFeatures
 
-	if opt.dataset == 'mscoco' then
+	if opt.dataset == 'mscoco' or  opt.dataset == 'flickr8k' then
 		-- Configurations for ResNet:
 		--  num. residual blocks, num features, residual block function
 		local cfg = {

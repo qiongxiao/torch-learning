@@ -3,12 +3,13 @@
 --  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LanguageModel.lua'
 --
 --]]
-
 require 'nn'
+
 local crit, parent = torch.class('nn.SeqCrossEntropyCriterion', 'nn.Criterion')
 
 function crit:__init()
 	parent:__init(self)
+	self.gradInput = torch.Tensor()
 end
 
 --[[
@@ -21,8 +22,8 @@ end
 	The criterion must be able to accomodate variably-sized sequences by making sure the gradients are properly set to zeros where appropriate.
 --]]
 function crit:updateOutput(input, seq)
+	self.gradInput:resizeAs(input):zero()
 	local batchsize, L, Mp1 = input:size(1), input:size(2), input:size(3)
-	self.gradInput:resize(batchsize, L, Mp1):zero()
 
 	local seqLength = seq:size(2)-1
 	assert(seqLength == L-2, 'input Tensor should be 2 larger in time')

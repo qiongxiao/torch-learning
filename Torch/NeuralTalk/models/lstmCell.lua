@@ -3,7 +3,6 @@
 --  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LSTM.lua'
 --
 --]]
-require 'nn'
 require 'nngraph'
 
 local netutils = require 'utils.netutils'

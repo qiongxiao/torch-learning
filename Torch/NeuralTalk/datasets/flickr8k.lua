@@ -117,7 +117,7 @@ function Flickr8kDataset:preprocess()
 		else
 			error('invalid split: ' .. self.split)
 		end
-	elseif self.opt.cnnType == 'vgg' then
+	elseif self.opt.cnnType == 'vggnet' then
 		if self.split == 'train' then
 			return t.Compose{
 				t.RandomSizedCrop(224),

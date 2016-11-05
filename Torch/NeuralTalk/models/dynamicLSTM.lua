@@ -4,18 +4,24 @@
 --
 --]]
 
-require 'nn'
+local nn = require 'nn'
+
+local lstmCell = require 'models.lstmCell'
 
 local layer, parent = torch.class('nn.dynamicLSTM', 'nn.Module')
 
-function layer:__init(cell, inputSize, outputSize, hiddenStateSize, rLength, rDepth, skipFlag)
+function layer:__init(inputSize, outputSize, hiddenStateSize, rLength, rDepth, opt)
 	parent.__init(self)
 	self.inputSize = inputSize
 	self.outputSize = outputSize
 	self.hiddenStateSize = hiddenStateSize
 	self.rLength = rLength
 	self.rDepth = rDepth
-	self.cell = cell
+	self.cell = lstmCell(inputSize, outputSize, hiddenStateSize, rDepth, opt.lstmDropout)
+
+	self.inferenceMax = opt.inferenceMax
+	self.temperature = opt.temperature
+
 	self:_createInitState(1) -- will be lazily resized later during forward passes
 end
 
@@ -62,7 +68,7 @@ end
 	input:
 		torch.Tensor of size "rLength * batchsize * inputSize"
 	output:
-		torch.Tensor of size "rLenght * batchsize * outputSize"
+		torch.Tensor of size "rLength * batchsize * outputSize"
 --]]
 function layer:updateOutput(input)
 	if self.slices == nil then self:createSlices() end -- lazily create clones on first forward pass
@@ -105,4 +111,67 @@ function layer:updateGradInput(input, gradOutput)
 		end
 	end
 	return self.gradInput
+end
+
+--[[
+	input:
+		torch.Tensor of size "batchsize * encodingSize"
+		nn layer: nn.LookupTable
+	output:
+		torch.Tensor of size "rLength * batchsize"
+--]]
+function layer:inference(imgs, lookupTable)
+
+	local batchsize = imgs:size(1)
+	self:_createInitState(batchsize)
+	local state = self.initState
+
+	local output = torch.LongTensor(self.rLength, batchsize):zero()
+	local outputProbs = torch.FloatTensor(self.rLength, batchsize):zero()
+	local logprobs
+
+	local it
+
+	for t = 1, self.rLength do
+
+		local xt, inferenceProbs
+
+		if t == 1 then
+			xt = imgs
+		elseif t == 2 then
+			it = torch.LongTensor(batchsize):fill(self.outputSize)
+			xt = lookupTable:forward(it)
+		else
+			xt = lookupTable:forward(it)
+		end
+
+		local inputs = {xt, unpack(state)}
+
+		local out = self.cell:forward(inputs)
+		logprobs = out[self.numState+1]
+		state = {}
+		for i = 1, self.numState do table.insert(state, out[i]) end
+
+		if self.inferenceMax == 1 then
+			inferenceProbs, it = torch.max(logprobs, 2)
+			it = it:view(-1):long()
+		else
+			local prob_prev
+			if self.temperature == 1.0 then
+				prob_prev = torch.exp(logprobs)
+			else
+				prob_prev = torch.exp(torch.div(logprobs, self.temperature))
+			end
+			it = torch.multinomial(prob_prev, 1)
+			inferenceProbs = logprobs:gather(2, it)
+			it = it:view(-1):long()
+		end
+		output[t] = it
+		outputProbs[t] = inferenceProbs:view(-1):float()
+	end
+
+	output = output
+	outputProbs = outputProbs
+
+	return output, outputProbs
 end

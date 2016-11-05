@@ -15,7 +15,7 @@ end
 
 function netutils.linearInit(model)
 	for k,v in pairs(model:findModules('nn.Linear')) do
-		local n = v.kW*v.kH*v.nOutputPlane
+		local n = v.weight:size(2)+v.weight:size(1)
 		v.weight:normal(0,math.sqrt(2/n))
 		v.bias:zero()
 	end

@@ -4,6 +4,7 @@
 --
 --]]
 require 'torch'
+require 'cutorch'
 require 'paths'
 require 'optim'
 require 'nn'
@@ -32,11 +33,11 @@ local trainLoader, valLoader, testLoader = DataLoader.create(opt)
 local vocabSize = trainLoader:getVocabSize()
 
 -- Create model
-local cnn, feature2seq, criterion = models.setup(opt, vocabSize, checkpoint)
+local model, criterion = models.setup(opt, vocabSize, checkpoint)
 
 
 -- The trainer handles the training loop and evaluation on validation set
-local trainer = Trainer(cnn, feature2seq, criterion, opt, optimState, cnnOptimState)
+local trainer = Trainer(model, criterion, opt, optimState)
 
 if opt.testOnly then
 	local loader
@@ -54,6 +55,7 @@ local startEpoch = checkpoint and checkpoint.epoch + 1 or 1
 local bestLoss = math.huge
 for epoch = startEpoch, opt.maxEpochs do
 	-- Train for a single epoch
+
 	local finetune = 0
 	if opt.finetune == 1 and epoch >= opt.finetuneAfter then
 		finetune = 1
@@ -73,7 +75,7 @@ for epoch = startEpoch, opt.maxEpochs do
 	end
 	collectgarbage()
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
-		checkpoints.saveModel(epoch, cnn, feature2seq, trainer.optimConfig, trainer.cnnOptimConfig, bestModel, opt)
+		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, opt)
 		plotter:checkpoint()
 	end
 	

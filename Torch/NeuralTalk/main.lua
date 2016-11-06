@@ -39,6 +39,10 @@ local model, criterion = models.setup(opt, vocabSize, checkpoint)
 -- The trainer handles the training loop and evaluation on validation set
 local trainer = Trainer(model, criterion, opt, optimState)
 
+if not paths.dirp('result') then
+	os.execute('mkdir result')
+end
+
 if opt.testOnly then
 	local loader
 	if opt.dataset == 'flickr8k' then
@@ -48,26 +52,26 @@ if opt.testOnly then
 	end
 	local testLoss, out = trainer:test(0, loader)
 	print('<Testing> * Loss:', testLoss)
-	utils.writeJson('predict_caption.json', out)
+	utils.writeJson('result/predict_caption.json', out)
 	return
 end
 
 local startEpoch = checkpoint and checkpoint.epoch + 1 or 1
 local bestLoss = math.huge
 for epoch = startEpoch, opt.maxEpochs do
-	-- Train for a single epoch
-
 	local finetune = false
 	if opt.finetuneAfter > 0 and epoch >= opt.finetuneAfter then
 		finetune = true
 	end
-
+	
+	-- Train for a single epoch
 	local trainLoss
 	trainLoss = trainer:train(epoch, trainLoader, finetune, plotter)
 
 	-- Run model on validation set
-	local testLoss, _ = trainer:test(epoch, valLoader)
-
+	local testLoss, out = trainer:test(epoch, valLoader)
+	utils.writeJson('result/val_predict_caption_' .. epoch .. '.json', out)
+	
 	local bestModel = false
 	if testLoss < bestLoss then
 		bestModel = true
@@ -95,5 +99,5 @@ end
 if (opt.dataset == 'flickr8k') then
 	local testLoss, out = trainer:test(0, testLoader)
 	print('<Testing> * Loss:', testLoss)
-	utils.writeJson('test_predict_caption.json', out)
+	utils.writeJson('result/test_predict_caption.json', out)
 end

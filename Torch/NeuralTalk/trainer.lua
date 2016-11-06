@@ -165,7 +165,8 @@ function Trainer:test(epoch, dataloader)
 
 	local lossSum = 0.0
 	local N = 0
-
+	local out = {}
+	
 	self.cnn:evaluate()
 	self.feature2seq:evaluate()
 
@@ -184,10 +185,13 @@ function Trainer:test(epoch, dataloader)
 		N = N + batchsize
 
 		local seq = self.feature2seq:inference(self.cnn.output)
-		local out = dataloader:decode(seq, sample.path)
+		seq = dataloader:decode(seq, sample.path)
 		
 		if self.opt.verbose then
-			print(out[1].caption)
+			print(seq[1].caption)
+		end
+		
+			table.insert(out, v)
 		end
 		
 		print((' | eval: [%d][%d/%d]    Time %.3f  Data %.3f  Loss %1.4f'):format(

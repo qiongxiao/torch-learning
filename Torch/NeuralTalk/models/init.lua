@@ -55,7 +55,10 @@ function M.setup(opt, vocabSize, checkpoint)
 
 			nFeatures = orig.weight:size(2)
 			cnn:remove(#cnn.modules)
-			cnn:add(nn.Dropout(opt.cnnFCdropout))
+			orig = cnn:get(#cnn.modules)
+			if torch.type(orig) ~= 'nn.Dropout' then
+				cnn:add(nn.Dropout(opt.cnnFCdropout))
+			end
 		else
 			-- if cnn model already ends at feature layer
 			nFeatures = opt.cnnFeatures
@@ -68,6 +71,10 @@ function M.setup(opt, vocabSize, checkpoint)
 		assert(paths.filep(modelPath), 'Saved seq model not found: ' .. modelPath)
 		print('<model init> => Resuming seq model from ' .. modelPath)
 		feature2seq = torch.load(modelPath)
+	elseif opt.retrainlstm ~= 'none' then
+		assert(paths.filep(opt.retrainlstm), 'File not found: ' .. opt.retrainlstm)
+		print('<model init> => Loading lstm model from file: ' .. opt.retrainlstm)
+		feature2seq = torch.load(opt.retrainlstm)		
 	elseif not opt.skipFlag then
 		print('<model init> => Creating feature2seq model')
 		require 'models.featureToSeq'

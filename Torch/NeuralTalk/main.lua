@@ -24,7 +24,7 @@ torch.manualSeed(opt.manualSeed)
 cutorch.manualSeedAll(opt.manualSeed)
 
 -- Load previous checkpoint, if it exists
-local checkpoint, optimState, cnnOptimState = checkpoints.loadLatestInfo(opt)
+local checkpoint, optimState = checkpoints.loadLatestInfo(opt)
 local plotter = Plotter(opt)
 
 -- Data loading
@@ -75,9 +75,13 @@ for epoch = startEpoch, opt.maxEpochs do
 		print('<Training> * Best model Loss:', testLoss)
 	end
 	collectgarbage()
+	
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
 		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, opt)
 		plotter:checkpoint()
+		if opt.maxCheckpointsNum > 0 and (epoch/opt.checkEvery) > opt.maxCheckpointsNum then
+			checkpoints.cleanModel(epoch - opt.checkEvery*opt.maxCheckpointsNum, opt)
+		end
 	end
 	
 	print("plot")

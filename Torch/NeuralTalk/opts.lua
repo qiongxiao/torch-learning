@@ -33,9 +33,10 @@ function M.parse(arg)
 	cmd:option('-testOnly',			'false',	'Run on validation set only')
 	cmd:option('-finetuneAfter',	-1,			'finetune after * epochs: -1 disable | positve integer')
 	------------- Checkpoint options ------------------
-	cmd:option('-save',			'checkpoints',	'Directory in which to save checkpoints')
-	cmd:option('-resume',		'none',			'Resume from the latest checkpoint in this directory')
-	cmd:option('-checkEvery',	1,				'checkpoint every # epcoh: -1 disable | positve integer')
+	cmd:option('-save',				'checkpoints',	'Directory in which to save checkpoints')
+	cmd:option('-resume',			'none',			'Resume from the latest checkpoint in this directory')
+	cmd:option('-checkEvery',		1,				'checkpoint every # epcoh: -1 disable | positve integer')
+	cmd:option('-maxCheckpointsNum',5,				'max number of checkpoints: -1 disable | positve interger')
 	------------- Plotting options --------------------
 	cmd:option('-plotPath',			'plot/out',	'Path to output plot file (excluding .json)')
 	cmd:option('-plotEvery',		0,			'Whether to plot every iteration')
@@ -44,7 +45,7 @@ function M.parse(arg)
 	cmd:option('-decay',			'default',	'using external decay parameter on lstm')
 	cmd:option('-decay_every',		100,		'external learning rate decay')
 	cmd:option('-decay_factor',		0.5,		'external learning rate decay factor')
-	------------- lstm Optimization options ----------------
+	------------- lstm Optimization options -----------
 	cmd:option('-optimizer',		'adam',		'lstm optimizer algorithm: adam | sgd')
 	cmd:option('-lr',				4e-4,		'lstm initial learning rate')
 	cmd:option('-lr_decay',			0,			'lstm learning rate decay')
@@ -52,7 +53,7 @@ function M.parse(arg)
 	cmd:option('-momentum',			0.9,		'lstm momentum, for sgd')
 	cmd:option('-optimAlpha',		0.8,		'lstm alpha for adam')
 	cmd:option('-optimBeta',		0.999,		'lstm beta used for adam')
-	------------- cnn Optimization options ----------------
+	------------- cnn Optimization options ------------
 	cmd:option('-cnnOptimizer',		'adam',		'cnn optimizer algorithm: adam | sgd')
 	cmd:option('-cnnLr',			1e-5,		'cnn initial learning rate')
 	cmd:option('-cnnLr_decay',		0,			'cnn learning rate decay')
@@ -60,10 +61,10 @@ function M.parse(arg)
 	cmd:option('-cnnMomentum',		0.9,		'cnn momentum, for sgd')
 	cmd:option('-cnnOptimAlpha',	0.8,		'cnn alpha for momentum of CNN')
 	cmd:option('-cnnOptimBeta',		0.999,		'cnn beta for momentum of CNN')
-	------------- cnn Model options -----------------------
+	------------- cnn Model options -------------------
 	cmd:option('-cnnType',			'vggnet',   'Options: resnet | vggnet')
 	cmd:option('-cnnFCdropout',		0.5,		'From feature layer to encoding layer')
-	------------- lstm Model options -----------------------
+	------------- lstm Model options ------------------
 	cmd:option('-skipFlag',			'false',	'whether to skip when input seq is over')
 	cmd:option('-rDepth',			1,			'depth of lstm')
 	cmd:option('-encodingSize',		512,		'size of encoding of lstm input')
@@ -71,15 +72,16 @@ function M.parse(arg)
 	cmd:option('-lstmDropout',		0.5,		'dropout for  lstm')
 	cmd:option('-inferenceMax',		1,			'using argmax algorithm to get word')
 	cmd:option('-temperature',		1,			'using normal sample algorithm to get word')
-	------------- Model options -----------------------
+	------------- cnn Model init options --------------
 	cmd:option('-retrain',			'none',		'Path to cnn model (t7) to retrain with')
-	cmd:option('-resetCNNlastlayer','false',	'Reset the fully connected layer for fine-tuning')
+	cmd:option('-resetCNNlastlayer','false',	'Delete final FC layer of cnn, must provide cnnFeatures at the same time')
 	cmd:option('-cnnCaffe',			'none',		'Path to caffe cnn model to retrain with')
 	cmd:option('-cnnProto',			'none',		'Path to caffe cnn model prototxt')
 	cmd:option('-cnnCaffelayernum',	38,			'the layer number of last feature layer in caffe cnn model')
 	cmd:option('-backendCaffe',		'nn',		'Options: cudnn | nn (for caffe load)')
 	cmd:option('-cnnFeatures',		4096,		'the feature number of last feature layer in cnn model')
-
+	------------- lstm Model init options -------------
+	cmd:option('-retrainlstm',		'none',		'Path to lstm model (t7) to retrain with')
 
 	cmd:text()
 

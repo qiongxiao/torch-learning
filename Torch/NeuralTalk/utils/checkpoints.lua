@@ -41,18 +41,19 @@ function checkpoint.loadLatestInfo(opt)
 	return latest_info, optimState
 end
 
-function checkpoint.saveModel(epoch, model, optimState, isBestModel, opt)
+function checkpoint.saveModel(epoch, model, optimState, isBestModel, finetune, opt)
 	-- create a clean copy on the CPU without modifying the original network
-	local cnn = deepCopy(model.cnn):float():clearState()
+	local cnn, cnnModelFile
+	if finetune then
+		cnn = deepCopy(model.cnn):float():clearState()
+		cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
+		torch.save(paths.concat(opt.save, cnnModelFile), cnn)
+	end
+	
 	local feature2seq = deepCopy(model.feature2seq):float():clearState()
-
-	local cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
 	local seqModelFile = 'model_seq' .. epoch .. '.t7'
 	local optimFile = 'optimState_' .. epoch .. '.t7'
-
-	torch.save(paths.concat(opt.save, cnnModelFile), cnn)
 	torch.save(paths.concat(opt.save, seqModelFile), feature2seq)
-
 	torch.save(paths.concat(opt.save, optimFile), optimState)
 
 	torch.save(paths.concat(opt.save, 'latest_info.t7'), {
@@ -63,7 +64,9 @@ function checkpoint.saveModel(epoch, model, optimState, isBestModel, opt)
 	})
 
 	if isBestModel then
-		torch.save(paths.concat(opt.save, 'model_best_cnn.t7'), cnn)
+		if finetune then
+			torch.save(paths.concat(opt.save, 'model_best_cnn.t7'), cnn)
+		end
 		torch.save(paths.concat(opt.save, 'model_best_seq.t7'), feature2seq)
 	end
 end
@@ -73,11 +76,13 @@ function checkpoint.cleanModel(epoch, opt)
 	local seqModelFile = 'model_seq' .. epoch .. '.t7'
 	local optimFile = 'optimState_' .. epoch .. '.t7'
 
-	assert(paths.filep(cnnModelFile), 'Deleting file' .. cnnModelFile .. 'not found')
+	--assert(paths.filep(cnnModelFile), 'Deleting file' .. cnnModelFile .. 'not found')
 	assert(paths.filep(seqModelFile), 'Deleting file' .. seqModelFile .. 'not found')
 	assert(paths.filep(optimFile), 'Deleting file' .. optimFile .. 'not found')
 
-	os.execute('rm ' .. paths.concat(opt.save, cnnModelFile))
+	if paths.filep(cnnModelFile) then
+		os.execute('rm ' .. paths.concat(opt.save, cnnModelFile))
+	end
 	os.execute('rm ' .. paths.concat(opt.save, seqModelFile))
 	os.execute('rm ' .. paths.concat(opt.save, optimFile))
 end

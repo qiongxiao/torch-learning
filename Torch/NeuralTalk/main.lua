@@ -81,7 +81,7 @@ for epoch = startEpoch, opt.maxEpochs do
 	collectgarbage()
 	
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
-		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, opt)
+		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, finetune, opt)
 		plotter:checkpoint()
 		if opt.maxCheckpointsNum > 0 and (epoch/opt.checkEvery) > opt.maxCheckpointsNum then
 			checkpoints.cleanModel(epoch - opt.checkEvery*opt.maxCheckpointsNum, opt)

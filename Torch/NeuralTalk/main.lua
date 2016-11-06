@@ -35,6 +35,15 @@ local vocabSize = trainLoader:getVocabSize()
 -- Create model
 local model, criterion = models.setup(opt, vocabSize, checkpoint)
 
+-- Create model for checkpoints
+local thinModel = {}
+thinModel.cnn = model.cnn
+-- cannot deepCopy model.feature2seq because lstm has many clones of one lstmCell after training
+thinModel.feature2seq = model.feature2seq:clone()
+local thinModuleList = thinModel.feature2seq:getModulesList()
+local origModuleList = model.feature2seq:getModulesList()
+for k, v in pairs(thinModuleList) do v:share(origModuleList[k], 'weight', 'bias') end
+
 -- The trainer handles the training loop and evaluation on validation set
 local trainer = Trainer(model, criterion, opt, optimState)
 
@@ -79,18 +88,18 @@ for epoch = startEpoch, opt.maxEpochs do
 	end
 	collectgarbage()
 	
+	print("plot")
+	plotter:add('Train Loss - Epoch', 'Train', epoch, trainLoss)
+	plotter:add('Loss', 'Train', epoch, trainLoss)
+	plotter:add('Loss', 'Validation', epoch, testLoss)
+	
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
-		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, opt)
+		checkpoints.saveModel(epoch, thinModel, trainer.optimConfig, bestModel, opt)
 		plotter:checkpoint()
 		if opt.maxCheckpointsNum > 0 and (epoch/opt.checkEvery) > opt.maxCheckpointsNum then
 			checkpoints.cleanModel(epoch - opt.checkEvery*opt.maxCheckpointsNum, opt)
 		end
 	end
-	
-	print("plot")
-	plotter:add('Train Loss - Epoch', 'Train', epoch, trainLoss)
-	plotter:add('Loss', 'Train', epoch, trainLoss)
-	plotter:add('Loss', 'Validation', epoch, testLoss)
 
 	collectgarbage()
 end

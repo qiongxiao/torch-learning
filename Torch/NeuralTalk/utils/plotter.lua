@@ -50,7 +50,7 @@ function Plotter:add(fig_id, plot_id, iter, data)
 	end
 	if not plot then
 		plot = {['name'] = plot_id, ['x'] = {}, ['y'] = {}}
-		table.insert(fig_data, plot)
+		tabinle.insert(fig_data, plot)
 	end
 	table.insert(plot['x'], iter)
 	table.insert(plot['y'], data)
@@ -58,7 +58,7 @@ function Plotter:add(fig_id, plot_id, iter, data)
 	utils.writeJson(self.path, self.figures)
 end
 
-function Plotter:save()
+function Plotter:checkpoint()
 	utils.writeJson(self.checkpoint_path, self.figures)
 end
 

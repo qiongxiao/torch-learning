@@ -191,6 +191,7 @@ function Trainer:test(epoch, dataloader)
 			print(seq[1].caption)
 		end
 		
+		for _, v in pairs(seq) do
 			table.insert(out, v)
 		end
 		

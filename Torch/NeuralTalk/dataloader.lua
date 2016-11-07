@@ -1,6 +1,6 @@
 --[[
 --
---  code from https://github.com/facebook/fb.resnet.torch/blob/master/dataloader.lua
+--  code adaption from https://github.com/facebook/fb.resnet.torch/blob/master/dataloader.lua
 --
 --  Single-threaded/Multi-threaded data loader
 --
@@ -153,9 +153,7 @@ function DataLoader:run()
 
 				local startIdx = (i - 1) * seqPerImg
 				target[{{startIdx+1, startIdx+seqPerImg},{2, 1+seqLength}}] = seq
-				for j = 1, seqPerImg do
-					table.insert(paths, sample.path)
-				end
+				table.insert(paths, sample.path)
 			end
 			collectgarbage()
 			idx = idx + batchsize

@@ -76,7 +76,7 @@ end
 function layer:shareSlices()
 	assert(self.slices ~= nil, 'cannot share before clone')
 	assert(self.lookupTables ~= nil, 'cannot share before clone')
-	for t = 2, self.seqLength+2 do
+	for t = 1, self.seqLength+2 do
 		self.slices[t]:share(self.lstmCell, 'weight', 'bias', 'gradWeight', 'gradBias')
 		self.lookupTables[t]:share(self.lookupTable, 'weight', 'gradWeight')
 	end
@@ -109,7 +109,7 @@ function layer:training()
 	self.linear:training()
 	self.expander:training()
 	if self.slices == nil then self:createSlices() end -- create these lazily if needed
-	self:shareSlices()
+	--self:shareSlices()
 	for k,v in pairs(self.slices) do v:training() end
 	for k,v in pairs(self.lookupTables) do v:training() end
 end
@@ -118,7 +118,7 @@ function layer:evaluate()
 	self.linear:evaluate()
 	self.expander:evaluate()
 	if self.slices == nil then self:createSlices() end -- create these lazily if needed
-	self:shareSlices()
+	--self:shareSlices()
 	for k,v in pairs(self.slices) do v:evaluate() end
 	for k,v in pairs(self.lookupTables) do v:evaluate() end
 end
@@ -136,7 +136,7 @@ function layer:updateOutput(input)
 	-- seq size "(seqLength+1) * batchsize(expanded)"
 	local seq = input[2]:transpose(1, 2)
 	if self.slices == nil then self:createSlices() end -- create these lazily if needed
-	self:shareSlices()
+	--self:shareSlices()
 	assert(imgs:size(2) == self.nFeatures)
 	assert(seq:size(1) == self.seqLength+1)
 

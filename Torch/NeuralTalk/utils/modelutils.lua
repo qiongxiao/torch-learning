@@ -20,12 +20,12 @@ end
 function modelutils.cloneFeature2seq(feature2seq, feature2seqTMP)
 	local moduleList = feature2seq:getModulesList()
 	local origModuleList = feature2seqTMP:getModulesList()
-	for k, v in pairs(moduleList) do v = origModuleList[k]:clone() end
+	for k, v in pairs(moduleList) do v:share(origModuleList[k], 'weight', 'bias') end
 end
 
 function modelutils.preproFeature2seq(feature2seq, feature2seqTMP)
 	feature2seq:createSlices()
-	cloneFeature2seq(feature2seq, feature2seqTMP)
+	modelutils.cloneFeature2seq(feature2seq, feature2seqTMP)
 	feature2seq:shareSlices()
 end
 

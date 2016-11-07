@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Basic torch code for captioning images on flickr8k, mscoco dataset. Reliazation of [NeuralTalk2 by karpathy](https://github.com/karpathy/neuraltalk2) 
+Basic torch code for captioning images on flickr8k, mscoco dataset. Realiazation of [NeuralTalk2 by karpathy](https://github.com/karpathy/neuraltalk2) 
 
 The code organization follows (some codes are copied from) [torch-resnet by facebook](https://github.com/facebook/fb.resnet.torch)
 

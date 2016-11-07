@@ -123,7 +123,7 @@ function Flickr8kDataset:preprocess()
 		if self.split == 'train' then
 			return t.Compose{
 				t.Scale(256),
-				t.PixelScale(256)
+				t.PixelScale(256),
 				t.RandomSizedCrop(224),
 				t.ColorNormalize(meanstd.mean),
 				t.HorizontalFlip(0.5),
@@ -131,7 +131,7 @@ function Flickr8kDataset:preprocess()
 		elseif self.split == 'val' or self.split == 'test' then
 			return t.Compose{
 				t.Scale(256),
-				t.PixelScale(256)
+				t.PixelScale(256),
 				t.ColorNormalize(meanstd.mean),
 				t.CenterCrop(224),
 			}

@@ -12,6 +12,10 @@ require 'cudnn'
 
 local netutils = require 'utils.netutils'
 
+require 'models.dynamicLSTM'
+require 'models.expander'
+require 'models.featureToSeq'
+require 'models.featureToSeqSkip'
 require 'models.seqCrossEntropyCriterion'
 
 local M = {}
@@ -74,17 +78,15 @@ function M.setup(opt, vocabSize, checkpoint)
 	elseif opt.retrainlstm ~= 'none' then
 		assert(paths.filep(opt.retrainlstm), 'File not found: ' .. opt.retrainlstm)
 		print('<model init> => Loading lstm model from file: ' .. opt.retrainlstm)
-		feature2seq = torch.load(opt.retrainlstm)		
+		feature2seq = torch.load(opt.retrainlstm)	
 	elseif not opt.skipFlag then
 		print('<model init> => Creating feature2seq model')
-		require 'models.featureToSeq'
 		feature2seq = nn.FeatureToSeq(opt, nFeatures, vocabSize)
 	else
 		print('<model init> => Creating feature2seq skipping model')
-		require 'models.featureToSeqSkip'
 		feature2seq = nn.FeatureToSeqSkip(opt, nFeatures, vocabSize)
 	end
-
+	
 	local criterion = nn.SeqCrossEntropyCriterion()
 
 	if opt.nGPU < 1 then
@@ -121,8 +123,29 @@ function M.setup(opt, vocabSize, checkpoint)
 	local model = {}
 	model.cnn = cnn
 	model.feature2seq = feature2seq
-
-	return model, criterion
+	
+	-- Create model for checkpoints
+	print('<model init> => creating thinner model')
+	local thinModel = {}
+	thinModel.cnn = model.cnn
+	-- cannot deepCopy model.feature2seq because lstm has many clones of one lstmCell after training
+  if checkpoint or opt.retrainlstm ~= 'none' then
+    local netType = torch.type(feature2seq)
+    if netType == 'nn.FeatureToSeqSkip' then
+      thinModel.feature2seq = nn.FeatureToSeqSkip(feature2seq.opt, feature2seq.nFeatures, feature2seq.vocabSize)
+    else
+      thinModel.feature2seq = nn.FeatureToSeq(feature2seq.opt, feature2seq.nFeatures, feature2seq.vocabSize)
+    end
+  else
+	  thinModel.feature2seq = model.feature2seq:clone()
+  end
+	local thinModuleList = thinModel.feature2seq:getModulesList()
+	local origModuleList = model.feature2seq:getModulesList()
+	for k, v in pairs(thinModuleList) do v:share(origModuleList[k], 'weight', 'bias') end
+	print('<model init> => complete thinner model')
+	collectgarbage()
+	
+	return model, criterion, thinModel
 end
 
 return M

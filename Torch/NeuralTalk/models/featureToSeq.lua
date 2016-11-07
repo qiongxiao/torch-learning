@@ -15,8 +15,10 @@ local layer, parent = torch.class('nn.FeatureToSeq', 'nn.Module')
 function layer:__init(opt, nFeatures, vocabSize)
 	parent.__init(self)
 
+	-- For thin model
+	self.opt = opt
 	self.nFeatures = nFeatures
-
+	self.vocabSize = vocabSize
 	local backend
 	if opt.backend == 'cudnn' then
 		require 'cudnn'
@@ -28,7 +30,6 @@ function layer:__init(opt, nFeatures, vocabSize)
 	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend.ReLU(true))
 	self.expander = nn.Expander(opt.seqPerImg)
 
-	self.vocabSize = vocabSize
 	self.encodingSize = opt.encodingSize
 	self.rDepth = opt.rDepth
 	self.seqLength = opt.seqLength

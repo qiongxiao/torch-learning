@@ -33,16 +33,7 @@ local trainLoader, valLoader, testLoader = DataLoader.create(opt)
 local vocabSize = trainLoader:getVocabSize()
 
 -- Create model
-local model, criterion = models.setup(opt, vocabSize, checkpoint)
-
--- Create model for checkpoints
-local thinModel = {}
-thinModel.cnn = model.cnn
--- cannot deepCopy model.feature2seq because lstm has many clones of one lstmCell after training
-thinModel.feature2seq = model.feature2seq:clone()
-local thinModuleList = thinModel.feature2seq:getModulesList()
-local origModuleList = model.feature2seq:getModulesList()
-for k, v in pairs(thinModuleList) do v:share(origModuleList[k], 'weight', 'bias') end
+local model, criterion, thinModel = models.setup(opt, vocabSize, checkpoint)
 
 -- The trainer handles the training loop and evaluation on validation set
 local trainer = Trainer(model, criterion, opt, optimState)
@@ -71,7 +62,7 @@ for epoch = startEpoch, opt.maxEpochs do
 	if opt.finetuneAfter > 0 and epoch >= opt.finetuneAfter then
 		finetune = true
 	end
-	
+
 	-- Train for a single epoch
 	local trainLoss
 	trainLoss = trainer:train(epoch, trainLoader, finetune, plotter)

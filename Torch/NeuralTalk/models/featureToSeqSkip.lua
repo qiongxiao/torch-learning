@@ -5,17 +5,20 @@
 --]]
 require 'nn'
 
-local netutils = require 'utils.netutils'
-
 local lstmCell = require 'models.lstmCell'
 require 'models.expander'
+
+local netutils = require 'utils.netutils'
 
 local layer, parent = torch.class('nn.FeatureToSeqSkip', 'nn.Module')
 
 function layer:__init(opt, nFeatures, vocabSize)
 	parent.__init(self)
-
+	
+	-- For thin model
+	self.opt = opt
 	self.nFeatures = nFeatures
+	self.vocabSize = vocabSize
 	local backend
 	if opt.backend == 'cudnn' then
 		require 'cudnn'
@@ -27,7 +30,6 @@ function layer:__init(opt, nFeatures, vocabSize)
 	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend.ReLU(true))
 	self.expander = nn.Expander(opt.seqPerImg)
 
-	self.vocabSize = vocabSize
 	self.encodingSize = opt.encodingSize
 	self.rDepth = opt.rDepth
 	self.seqLength = opt.seqLength
@@ -74,8 +76,6 @@ end
 function layer:getModulesList()
 	return {self.linear, self.expander, self.lstmCell, self.lookupTable}
 end
-
-
 
 function layer:parameters()
 	local p0,g0 = self.linear:parameters()

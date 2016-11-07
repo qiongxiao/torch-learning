@@ -5,7 +5,6 @@
 --  The training loop and learning rate schedule
 --
 --]]
-
 local checkpoint = {}
 
 local function deepCopy(tbl)
@@ -41,10 +40,15 @@ function checkpoint.loadLatestInfo(opt)
 	return latest_info, optimState
 end
 
-function checkpoint.saveModel(epoch, model, optimState, isBestModel, finetune, opt)
+function checkpoint.saveModel(epoch, model, optimState, isBestModel, opt)
 	-- create a clean copy on the CPU without modifying the original network
+	print('<checkpoint> => begin cnn copy')
 	local cnn = deepCopy(model.cnn):float():clearState()
+	print('<checkpoint> => end cnn copy')
+	print('<checkpoint> => begin feature2seq copy')
+	-- cannot deepCopy because lstm has many clones of one lstmCell
 	local feature2seq = deepCopy(model.feature2seq):float():clearState()
+	print('<checkpoint> => end feature2seq copy')
 	
 	local cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
 	local seqModelFile = 'model_seq' .. epoch .. '.t7'
@@ -70,14 +74,17 @@ function checkpoint.cleanModel(epoch, opt)
 	local cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
 	local seqModelFile = 'model_seq' .. epoch .. '.t7'
 	local optimFile = 'optimState_' .. epoch .. '.t7'
-
+	local cnnPath = paths.concat(opt.save, cnnModelFile)
+	local seqPath = paths.concat(opt.save, seqModelFile)
+	local optimPath = paths.concat(opt.save, optimFile)
+	
 	assert(paths.filep(cnnModelFile), 'Deleting file' .. cnnModelFile .. 'not found')
 	assert(paths.filep(seqModelFile), 'Deleting file' .. seqModelFile .. 'not found')
 	assert(paths.filep(optimFile), 'Deleting file' .. optimFile .. 'not found')
 
-	os.execute('rm ' .. paths.concat(opt.save, cnnModelFile))
-	os.execute('rm ' .. paths.concat(opt.save, seqModelFile))
-	os.execute('rm ' .. paths.concat(opt.save, optimFile))
+	os.execute('rm ' .. cnnPath)
+	os.execute('rm ' .. seqPath)
+	os.execute('rm ' .. optimPath)
 end
 
 return checkpoint

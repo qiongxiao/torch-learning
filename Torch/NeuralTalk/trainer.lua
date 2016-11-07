@@ -115,11 +115,11 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 		self.criterion:backward(self.feature2seq.output, self.target)
 		self.feature2seq:backward({self.cnn.output, self.target}, self.criterion.gradInput)
 
-		self.params:clamp(-self.opt.gradClip, self.opt.gradClip)
+		self.gradParams:clamp(-self.opt.gradClip, self.opt.gradClip)
 
 		if finetune then
 			self.cnn:backward(self.input, self.feature2seq.gradInput[1])
-			self.cnnParams:clamp(-self.opt.gradClip, self.opt.gradClip)
+			self.cnnGradParams:clamp(-self.opt.gradClip, self.opt.gradClip)
 		end
 
 		if self.lstmOptimizer == 'sgd' then

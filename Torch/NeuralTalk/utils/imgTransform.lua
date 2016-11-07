@@ -33,7 +33,7 @@ function M.ColorNormalize(mean, std)
 		img = img:clone()
 		for i = 1, 3 do
 			img[i]:add(-mean[i])
-			if not std then
+			if std then
 				img[i]:div(std[i])
 			end
 		end

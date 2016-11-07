@@ -107,13 +107,13 @@ function Flickr8kDataset:preprocess()
 					saturation = 0.4,
 				}),
 				t.Lighting(0.1, pca.eigval, pca.eigvec),
-				t.ColorNormalize(meanstd.mean， meanstd.std),
+				t.ColorNormalize(meanstd.mean, meanstd.std),
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' or self.split == 'test' then
 			return t.Compose{
 				t.Scale(256),
-				t.ColorNormalize(meanstd.mean， meanstd.std),
+				t.ColorNormalize(meanstd.mean, meanstd.std),
 				t.CenterCrop(224),
 			}
 		else

@@ -49,6 +49,13 @@ function layer:createSlices()
 	end
 end
 
+function layer:shareSlices()
+	assert(self.slices ~= nil, 'cannot share before clone')
+	for t = 2, self.rLength do
+		self.slices[t]:share(self.cell, 'weight', 'bias', 'gradWeight', 'gradBias')
+	end
+end
+
 function layer:parameters()
 	return self.cell:parameters()
 	-- ################ ?? destroy weight sharing?? ################
@@ -56,11 +63,13 @@ end
 
 function layer:training()
 	if self.slices == nil then self:createSlices() end -- create these lazily if needed
+	self:shareSlices()
 	for k,v in pairs(self.slices) do v:training() end
 end
 
 function layer:evaluate()
 	if self.slices == nil then self:createSlices() end -- create these lazily if needed
+	self:shareSlices()
 	for k,v in pairs(self.slices) do v:evaluate() end
 end
 
@@ -72,6 +81,7 @@ end
 --]]
 function layer:updateOutput(input)
 	if self.slices == nil then self:createSlices() end -- lazily create clones on first forward pass
+	self:shareSlices()
 	assert(input:size(1) == self.rLength)
 	local batchsize = input:size(2)
 	self.output:resize(self.rLength, batchsize, self.outputSize)

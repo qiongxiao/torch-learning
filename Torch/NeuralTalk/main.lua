@@ -33,7 +33,7 @@ local trainLoader, valLoader, testLoader = DataLoader.create(opt)
 local vocabSize = trainLoader:getVocabSize()
 
 -- Create model
-local model, criterion, thinModel = models.setup(opt, vocabSize, checkpoint)
+local model, criterion = models.setup(opt, vocabSize, checkpoint)
 
 -- The trainer handles the training loop and evaluation on validation set
 local trainer = Trainer(model, criterion, opt, optimState)
@@ -85,7 +85,7 @@ for epoch = startEpoch, opt.maxEpochs do
 	plotter:add('Loss', 'Validation', epoch, testLoss)
 	
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
-		checkpoints.saveModel(epoch, thinModel, trainer.optimConfig, bestModel, opt)
+		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, opt)
 		plotter:checkpoint()
 		if opt.maxCheckpointsNum > 0 and (epoch/opt.checkEvery) > opt.maxCheckpointsNum then
 			checkpoints.cleanModel(epoch - opt.checkEvery*opt.maxCheckpointsNum, opt)

@@ -10,13 +10,11 @@ require 'nn'
 require 'cunn'
 require 'cudnn'
 
-local netutils = require 'utils.netutils'
-
-require 'models.dynamicLSTM'
-require 'models.expander'
 require 'models.featureToSeq'
 require 'models.featureToSeqSkip'
 require 'models.seqCrossEntropyCriterion'
+
+local modelutils = require 'utils.modelutils'
 
 local M = {}
 
@@ -35,7 +33,7 @@ function M.setup(opt, vocabSize, checkpoint)
 		assert(paths.filep(opt.cnnCaffe), 'File not found: ' .. opt.cnnCaffe)
 		assert(paths.filep(opt.cnnProto), 'File not found: ' .. opt.cnnProto)
 		print('<model init> => Loading caffe model from file: ' .. opt.cnnCaffe)
-		cnn = netutils.build_cnn(opt)
+		cnn = modelutils.buildCNN(opt)
 		--print('<model init> => Saving caffe model to t7 file')
 		--torch.save(opt.cnnCaffe .. '.t7', cnn)
 	else
@@ -69,16 +67,20 @@ function M.setup(opt, vocabSize, checkpoint)
 		end
 	end
 
-	local feature2seq
+	local feature2seq, feature2seqTMP
 	if checkpoint then
 		local modelPath = paths.concat(opt.resume, checkpoint.seqModelFile)
 		assert(paths.filep(modelPath), 'Saved seq model not found: ' .. modelPath)
 		print('<model init> => Resuming seq model from ' .. modelPath)
-		feature2seq = torch.load(modelPath)
+		feature2seqTMP = torch.load(modelPath)
+		feature2seq = modelutils.createFeature2seq(feature2seqTMP)
+		modelutils.preproFeature2seq(feature2seq, feature2seqTMP)
 	elseif opt.retrainlstm ~= 'none' then
 		assert(paths.filep(opt.retrainlstm), 'File not found: ' .. opt.retrainlstm)
 		print('<model init> => Loading lstm model from file: ' .. opt.retrainlstm)
-		feature2seq = torch.load(opt.retrainlstm)	
+		feature2seqTMP = torch.load(opt.retrainlstm)
+		feature2seq = modelutils.createFeature2seq(feature2seqTMP)
+		modelutils.preproFeature2seq(feature2seq, feature2seqTMP)
 	elseif not opt.skipFlag then
 		print('<model init> => Creating feature2seq model')
 		feature2seq = nn.FeatureToSeq(opt, nFeatures, vocabSize)
@@ -123,29 +125,10 @@ function M.setup(opt, vocabSize, checkpoint)
 	local model = {}
 	model.cnn = cnn
 	model.feature2seq = feature2seq
-	
-	-- Create model for checkpoints
-	print('<model init> => creating thinner model')
-	local thinModel = {}
-	thinModel.cnn = model.cnn
-	-- cannot deepCopy model.feature2seq because lstm has many clones of one lstmCell after training
-  if checkpoint or opt.retrainlstm ~= 'none' then
-    local netType = torch.type(feature2seq)
-    if netType == 'nn.FeatureToSeqSkip' then
-      thinModel.feature2seq = nn.FeatureToSeqSkip(feature2seq.opt, feature2seq.nFeatures, feature2seq.vocabSize)
-    else
-      thinModel.feature2seq = nn.FeatureToSeq(feature2seq.opt, feature2seq.nFeatures, feature2seq.vocabSize)
-    end
-  else
-	  thinModel.feature2seq = model.feature2seq:clone()
-  end
-	local thinModuleList = thinModel.feature2seq:getModulesList()
-	local origModuleList = model.feature2seq:getModulesList()
-	for k, v in pairs(thinModuleList) do v:share(origModuleList[k], 'weight', 'bias') end
-	print('<model init> => complete thinner model')
+
 	collectgarbage()
 	
-	return model, criterion, thinModel
+	return model, criterion
 end
 
 return M

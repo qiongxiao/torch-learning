@@ -50,6 +50,14 @@ function layer:getModulesList()
 	return {self.linear, self.expander, self.lstm.cell, self.lookupTable}
 end
 
+function layer:createSlices()
+	self.lstm:createSlices()
+end
+
+function layer:shareSlices()
+	self.lstm:shareSlices()
+end
+
 function layer:parameters()
 	local p0,g0 = self.linear:parameters()
 	local p1,g1 = self.lstm:parameters()

@@ -99,6 +99,7 @@ function Flickr8kDataset:preprocess()
 	if self.opt.cnnType == 'resnet' then
 		if self.split == 'train' then
 			return t.Compose{
+				t.Scale(256),
 				t.RandomSizedCrop(224),
 				t.ColorJitter({
 					brightness = 0.4,
@@ -106,13 +107,13 @@ function Flickr8kDataset:preprocess()
 					saturation = 0.4,
 				}),
 				t.Lighting(0.1, pca.eigval, pca.eigvec),
-				t.ColorNormalize(meanstd, self.opt.cnnType),
+				t.ColorNormalize(meanstd.mean， meanstd.std),
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' or self.split == 'test' then
 			return t.Compose{
 				t.Scale(256),
-				t.ColorNormalize(meanstd, self.opt.cnnType),
+				t.ColorNormalize(meanstd.mean， meanstd.std),
 				t.CenterCrop(224),
 			}
 		else
@@ -121,14 +122,17 @@ function Flickr8kDataset:preprocess()
 	elseif self.opt.cnnType == 'vggnet' then
 		if self.split == 'train' then
 			return t.Compose{
+				t.Scale(256),
+				t.PixelScale(256)
 				t.RandomSizedCrop(224),
-				t.ColorNormalize(meanstd, self.opt.cnnType),
+				t.ColorNormalize(meanstd.mean),
 				t.HorizontalFlip(0.5),
 			}
 		elseif self.split == 'val' or self.split == 'test' then
 			return t.Compose{
 				t.Scale(256),
-				t.ColorNormalize(meanstd, self.opt.cnnType),
+				t.PixelScale(256)
+				t.ColorNormalize(meanstd.mean),
 				t.CenterCrop(224),
 			}
 		else

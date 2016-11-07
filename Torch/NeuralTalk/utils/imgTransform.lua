@@ -21,13 +21,20 @@ function  M.Compose( transforms )
 	end
 end
 
-function M.ColorNormalize( meanstd, netType )
+function M.PixelScale(value)
+	return function(img)
+		img = img:clone():mul(value)
+		return img
+	end
+end
+
+function M.ColorNormalize(mean, std)
 	return function(img)
 		img = img:clone()
 		for i = 1, 3 do
-			img[i]:add(-meanstd.mean[i])
-			if netType == 'resnet' then
-				img[i]:div(meanstd.std[i])
+			img[i]:add(-mean[i])
+			if not std then
+				img[i]:div(std[i])
 			end
 		end
 		return img

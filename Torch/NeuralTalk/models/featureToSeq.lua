@@ -1,6 +1,6 @@
 --[[
 --
---  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LanguageModel.lua'
+--  feature to sequence model (cannot skip some null tokens when training)
 --
 --]]
 require 'nn'

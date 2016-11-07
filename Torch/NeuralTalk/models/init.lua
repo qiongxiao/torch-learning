@@ -1,9 +1,6 @@
 --[[
 --
---  code from https://github.com/facebook/fb.resnet.torch/blob/master/models/init.lua
---
---  Generic model creating code. For the specific ResNet model see
---  models/resnet.lua
+--  Generic model creating code.
 --
 --]]
 require 'nn'

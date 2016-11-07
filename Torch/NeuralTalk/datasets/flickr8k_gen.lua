@@ -1,6 +1,6 @@
 --[[
 --
---  code from "https://github.com/karpathy/neuraltalk2/blob/master/coco/coco_preprocess.ipynb"
+--  flickr8k dataset preparation
 --
 --]]
 

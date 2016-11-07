@@ -1,6 +1,6 @@
 --[[
 --
--- some code from "https://raw.githubusercontent.com/facebook/fb.resnet.torch/master/datasets/imagenet.lua"
+--  code imitated "https://raw.githubusercontent.com/facebook/fb.resnet.torch/master/datasets/imagenet.lua"
 --
 --  flickr8k dataset loader
 --

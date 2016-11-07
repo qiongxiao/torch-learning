@@ -1,3 +1,9 @@
+--[[
+--
+--	general operation for network
+--
+--]]
+
 local netutils = {}
 
 function netutils.convInit(model, name)
@@ -18,17 +24,6 @@ function netutils.linearInit(model)
 		local n = v.weight:size(2)+v.weight:size(1)
 		v.weight:normal(0,math.sqrt(2/n))
 		v.bias:zero()
-	end
-end
-
-function netutils.zeroPartialParams(params, p)
-	p = p or 0.5
-	for _, v in pairs(params) do
-		local vv = v:view(-1)
-		local vvabs = torch.abs(vv)
-		local num = vv:size(1)
-		local _, vk = torch.topk(vvabs, math.floor(num*p))
-		vv:indexFill(1, vk, 0)
 	end
 end
 

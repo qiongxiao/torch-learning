@@ -1,8 +1,8 @@
 --[[
 --
---  code from https://github.com/facebook/fb.resnet.torch/blob/master/checkpoints.lua
+--  code imitated https://github.com/facebook/fb.resnet.torch/blob/master/checkpoints.lua
 --
---  The training loop and learning rate schedule
+--  checkpoints module
 --
 --]]
 local modelutils = require 'utils.modelutils'
@@ -86,9 +86,9 @@ function checkpoint.cleanModel(epoch, opt)
 	local seqPath = paths.concat(opt.save, seqModelFile)
 	local optimPath = paths.concat(opt.save, optimFile)
 	
-	assert(paths.filep(cnnModelFile), 'Deleting file' .. cnnModelFile .. 'not found')
-	assert(paths.filep(seqModelFile), 'Deleting file' .. seqModelFile .. 'not found')
-	assert(paths.filep(optimFile), 'Deleting file' .. optimFile .. 'not found')
+	assert(paths.filep(cnnPath), 'Deleting file ' .. cnnPath .. 'not found')
+	assert(paths.filep(seqPath), 'Deleting file ' .. seqPath .. 'not found')
+	assert(paths.filep(optimPath), 'Deleting file ' .. optimPath .. 'not found')
 
 	os.execute('rm ' .. cnnPath)
 	os.execute('rm ' .. seqPath)

@@ -1,6 +1,6 @@
 --[[
 --
---  code from https://github.com/jcjohnson/torch-rnn
+--	some general operations
 --
 --]]
 
@@ -8,6 +8,7 @@ local cjson = require 'cjson'
 
 local utils = {}
 
+--  code from https://github.com/jcjohnson/torch-rnn
 function utils.readJson(path)
 	local f = io.open(path, 'r')
 	local s = f:read('*all')

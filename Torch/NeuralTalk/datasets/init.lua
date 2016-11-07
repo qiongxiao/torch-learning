@@ -2,8 +2,6 @@
 --
 --  code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/init.lua
 --
---  mscoco datasets
---
 --]]
 
 local M = {}

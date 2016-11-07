@@ -1,3 +1,8 @@
+--[[
+--
+--	general operation for dataset preparation
+--
+--]]
 local sys = require 'sys'
 local ffi = require 'ffi'
 local paths = require 'paths'

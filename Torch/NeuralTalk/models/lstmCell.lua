@@ -1,6 +1,6 @@
 --[[
 --
---  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LSTM.lua'
+--  code adaption from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LSTM.lua'
 --
 --]]
 require 'nngraph'

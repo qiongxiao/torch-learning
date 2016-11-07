@@ -1,6 +1,6 @@
 --[[
 --
---  code from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/cifar10.lua
+--  code adaption from https://github.com/facebook/fb.resnet.torch/blob/master/datasets/cifar10.lua
 --
 --  CIFAR-10 dataset loader
 --

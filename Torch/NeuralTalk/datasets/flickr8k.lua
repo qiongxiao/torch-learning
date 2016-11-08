@@ -43,7 +43,6 @@ function Flickr8kDataset:__init(imageInfo, opt, split)
 	assert(paths.dirp(self.dir), 'directory does not exist: ' .. self.dir)
 end
 
-function Flickr8kDataset:get(i)
 	local path = ffi.string(self.imageInfo.imagePath[i]:data())
 	local image = self:_loadImage(paths.concat(self.dir, path))
 	local startIdx = self.imageInfo.imageCapIdx[i][1]
@@ -52,8 +51,6 @@ function Flickr8kDataset:get(i)
 
 	return {
 		input = image,
-		target = captions,
-		path = path,
 	}
 end
 

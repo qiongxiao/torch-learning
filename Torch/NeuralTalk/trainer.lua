@@ -167,6 +167,8 @@ function Trainer:test(epoch, dataloader)
 	local N = 0
 	local out = {}
 	
+	dataloader:scorerInit({'CIDEr'})
+	
 	self.cnn:evaluate()
 	self.feature2seq:evaluate()
 
@@ -185,13 +187,14 @@ function Trainer:test(epoch, dataloader)
 		N = N + batchsize
 
 		local seq = self.feature2seq:inference(self.cnn.output)
-		seq = dataloader:decode(seq, sample.path)
+		dataloader:scorerUpdate(seq, sample.indices)
+		local deseq = dataloader:decode(seq, sample.indices)
 		
 		if self.opt.verbose then
-			print(seq[1].caption)
+			print(deseq[1].caption)
 		end
 		
-		for _, v in pairs(seq) do
+		for _, v in pairs(deseq) do
 			table.insert(out, v)
 		end
 		
@@ -202,13 +205,15 @@ function Trainer:test(epoch, dataloader)
 		dataTimer:reset()
 	end
 
+	local scores = dataloader:scorerCompute()
+	
 	self.cnn:training()
 	self.feature2seq:training()
 
-	print((' * Finished epoch # %d    Err: %7.3f\n'):format(epoch, lossSum / N))
+	print((' * Finished epoch # %d    Err: %7.3f    CIDEr: %7.3f\n'):format(epoch, lossSum / N, scores['CIDEr']['score']))
 
 	collectgarbage()
-	return lossSum / N, out
+	return lossSum / N, out, scores
 end
 
 function Trainer:copyInputs(sample)

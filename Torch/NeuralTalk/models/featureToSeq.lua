@@ -149,6 +149,7 @@ function layer:inference(imgs)
 
 	output = output:narrow(1, 2, self.seqLength):transpose(1, 2)
 	outputProbs = outputProbs:narrow(1, 2, self.seqLength):transpose(1, 2)
-
+	output[torch.eq(output, self.vocabSize+1)] = 0
+	
 	return output, outputProbs
 end

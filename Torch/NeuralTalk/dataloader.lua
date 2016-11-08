@@ -6,9 +6,8 @@
 --
 --]]
 
-local datasets = require 'datasets/init'
-local Threads = require 'threads'
-Threads.serialization('threads.sharedserialize')
+local datasets = require 'datasets.init'
+local Scorer = require 'utils.scorer'
 
 local M = {}
 local DataLoader = torch.class('cnn.DataLoader', M)
@@ -44,32 +43,11 @@ function DataLoader:__init(dataset, opt, split)
 	self.batchsize = opt.batchsize
 
 	--  single-threaded version
-	if (opt.nThreads == 1) then
-		require('datasets/' .. opt.dataset)
-		self.__size = dataset:size()
-		self.dataset = dataset
-		self.preprocess = dataset:preprocess()
-		self.vocabSize = self.dataset.vocabSize
-	else
-		local manualSeed = opt.manualSeed
-		local function init()
-			require('datasets/' .. opt.dataset)
-		end
-		local function main(idx)
-			if manualSeed ~= 0 then
-				torch.manualSeed(manualSeed + idx)
-			end
-			torch.setnumthreads(1)
-			_G.dataset = dataset
-			_G.preprocess = dataset:preprocess()
-			return dataset:size(), dataset.vocabSize
-		end
-
-		local threads, sizes = Threads(opt.nThreads, init, main)
-		self.threads = threads
-		self.__size = sizes[1][1]
-		self.vocabSize = sizes[1][2]
-	end
+	require('datasets/' .. opt.dataset)
+	self.__size = dataset:size()
+	self.dataset = dataset
+	self.preprocess = dataset:preprocess()
+	self.vocabSize = self.dataset.vocabSize
 end
 
 function DataLoader:size()
@@ -84,7 +62,7 @@ end
 --	input:
 --		torch.Tensor of size batchsize * seqLength
 --]]
-function DataLoader:decode(seq, paths)
+function DataLoader:decode(seq, indices)
 	local batchsize, seqLength = seq:size(1), seq:size(2)-1
 	local out = {}
 	for i = 1, batchsize do
@@ -97,9 +75,35 @@ function DataLoader:decode(seq, paths)
 			if j >= 2 then txt = txt .. ' ' end
 			txt = txt .. word
 		end
-		table.insert(out, {file_path = paths[i], caption = txt})
+		local path = self.dataset:getPath(indices[i])
+		table.insert(out, {file_path = path, caption = txt})
 	end
 	return out
+end
+
+function DataLoader:scorerInit(scorerTypes)
+	self.scorers = {}
+	for _, v in scorerTypes do
+		table.insert(self.scorers, Scorer(v))
+	end
+end
+
+function DataLoader:scorerUpdate(seq, indices)
+	local batchsize = seq:size(1)
+	for i = 1, batchsize do
+		local captions = self.dataset:getCaptions(indices[i])
+		for _, scorer in self.scorers do
+			scorer:update(captions, seq[i])
+		end
+	end
+end
+
+function DataLoader:scorerCompute()
+	local s = {}
+	for _, scorer in self.scorers do
+		local sa, ss = scorer:computeScore()
+	end
+	return s
 end
 
 function DataLoader:run()
@@ -117,7 +121,6 @@ function DataLoader:run()
 			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1)):long()
 			local sz = indices:size(1)
 
-			local paths = {}
 			local batch, imageSize
 			local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
 			-- insert the start sign (vocabSize+1)
@@ -153,7 +156,6 @@ function DataLoader:run()
 
 				local startIdx = (i - 1) * seqPerImg
 				target[{{startIdx+1, startIdx+seqPerImg},{2, 1+seqLength}}] = seq
-				table.insert(paths, sample.path)
 			end
 			collectgarbage()
 			idx = idx + batchsize
@@ -161,100 +163,20 @@ function DataLoader:run()
 				input = batch,
 				-- output target size is batchsize * (seqLength + 1)
 				target = target,
-				path = paths
+				index = indices
 			}
 		else
 			return nil
 		end
 	end
 
-	local function enqueue()
-		while idx <= size and self.threads:acceptsjob() do
-			local indices = perm:narrow(1, idx, math.min(batchsize, size - idx + 1))
-			self.threads:addjob(
-				function(indices, seqPerImg, seqLength)
-					local sz = indices:size(1)
-
-					local paths = {}
-					local batch, imageSize
-					local target = torch.IntTensor(sz * seqPerImg, seqLength+1)
-					-- insert the start sign (vocabSize+1)
-					target[{{},{1}}]:fill(self.vocabSize+1)
-
-					for i, idx in ipairs(indices:totable()) do
-						local sample = _G.dataset:get(idx)
-
-						-- fetch image
-						local input = _G.preprocess(sample.input)
-						if not batch then
-							imageSize = input:size():totable()
-							batch = torch.FloatTensor(sz, table.unpack(imageSize))
-						end
-						batch[i]:copy(input)
-
-						-- fetch sequences
-						local seq
-						local nSeq = sample.target:size(1)
-						if nSeq < seqPerImg then
-							-- we need to subsample (with replacement)
-							seq = torch.LongTensor(seqPerImg, seqLength)
-							for q = 1, seqPerImg do
-								local seqIdx = torch.random(1, nSeq)
-								seq[{{q, q}}] = sample.target[{{seqIndex, seqIdx}}]
-							end
-						elseif nSeq > seqPerImg then
-							local seqIndex = torch.random(1, nSeq - seqPerImg + 1)
-							seq = sample.target:narrow(1, seqIndex, seqPerImg)
-						else
-							seq = sample.target
-						end
-
-						local startIdx = (i - 1) * seqPerImg
-						target[{{startIdx+1, startIdx+seqPerImg},{2, 1+seqLength}}] = seq
-
-						for j = 1, seqPerImg do
-							table.insert(paths, sample.path)
-						end
-					end
-					collectgarbage()
-
-					return {
-						input = batch:view(sz, table.unpack(imageSize)),
-						target = target,
-						path = paths,
-					}
-				end,
-				function(_sample_)
-					sample = _sample_
-				end,
-				indices,
-				self.seqPerImg,
-				self.seqLength
-			)
-			idx = idx + batchSize
-		end
-	end
-
 	local n = 0
 	local function loop()
-		if self.nThreads == 1 then
-			sample = makebatches()
-			if not sample then
-				return nil
-			end
-			n = n + 1
-		else
-			enqueue()
-			if not threads:hasjob() then
-				return nil
-			end
-			threads:dojob()
-			if threads:haserror() then
-				threads:synchronize()
-			end
-			enqueue()
-			n = n + 1
+		sample = makebatches()
+		if not sample then
+			return nil
 		end
+		n = n + 1
 		return n, sample
 	end
 

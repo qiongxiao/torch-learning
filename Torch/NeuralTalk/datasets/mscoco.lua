@@ -39,8 +39,20 @@ function MscocoDataset:__init(imageInfo, opt, split)
 	assert(paths.dirp(self.dir), 'directory does not exist: ' .. self.dir)
 end
 
-function MscocoDataset:get(i)
+function MscocoDataset:getPath(i)
 	local path = ffi.string(self.imageInfo.imagePath[i]:data())
+	return path
+end
+
+function MscocoDataset:getCaptions(i)
+	local startIdx = self.imageInfo.imageCapIdx[i][1]
+	local endIdx = self.imageInfo.imageCapIdx[i][2]
+	local captions = self.imageInfo.imageCaptions:sub(startIdx, endIdx)
+	return captions
+end
+
+function MscocoDataset:get(i)
+	local path = self:getPath(i)
 
 	local image = self:_loadImage(paths.concat(self.dir, path))
 	local startIdx = self.imageInfo.imageCapIdx[i][1]
@@ -49,7 +61,7 @@ function MscocoDataset:get(i)
 
 	return {
 		input = image,
-		target = captions,
+		target = self:getCaptions(i),
 	}
 end
 

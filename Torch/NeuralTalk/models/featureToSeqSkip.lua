@@ -276,6 +276,7 @@ function layer:inference(imgs)
 
 	output = output:transpose(1, 2):contiguous()
 	outputProbs = outputProbs:transpose(1, 2)
-
+	output[torch.eq(output, self.vocabSize+1)] = 0
+	
 	return output, outputProbs
 end

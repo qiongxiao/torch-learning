@@ -4,7 +4,7 @@ local Scorer = torch.class('Scorer', M)
 
 function Scorer:__init(scorerType)
 	if scorerType == 'CIDEr' then
-		local Cider = require 'utils.cider'
+		local Cider = require 'scorers.cider'
 		self.scorer = Cider(4, 6.0)
 		self.type = scorerType
 	else
@@ -21,7 +21,7 @@ function Scorer:update(refs, test)
 end
 
 function Scorer:computeScore()
-	return scorer:computeScore()
+	return self.scorer:computeScore()
 end
 
 return M.Scorer

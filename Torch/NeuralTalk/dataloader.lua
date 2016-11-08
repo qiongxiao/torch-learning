@@ -7,7 +7,7 @@
 --]]
 
 local datasets = require 'datasets.init'
-local Scorer = require 'utils.scorer'
+local Scorer = require 'scorers.scorer'
 
 local M = {}
 local DataLoader = torch.class('cnn.DataLoader', M)
@@ -164,7 +164,7 @@ function DataLoader:run()
 				input = batch,
 				-- output target size is batchsize * (seqLength + 1)
 				target = target,
-				index = indices
+				indices = indices
 			}
 		else
 			return nil

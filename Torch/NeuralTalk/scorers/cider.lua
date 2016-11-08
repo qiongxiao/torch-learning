@@ -8,7 +8,7 @@ function Cider:__init(n, sigma)
 end
 
 local function precook(seq, n)
-	local seqLength = seq:size(2)
+	local seqLength = seq:size(1)
 	local counts = {}
 	for k = 1, n do
 		for i = 1, seqLength-k+1 do
@@ -20,7 +20,7 @@ local function precook(seq, n)
 				end
 			end
 			if flag == 0 then
-				local ngram = seq[{i, i+k-1}]
+				local ngram = seq[{{i, i+k-1}}]
 				if not counts[ngram] then
 					counts[ngram] = 1
 				else
@@ -38,7 +38,7 @@ local function refsCook(refs, n)
 	local out = {}
 	local numRefs = refs:size(1)
 	for i = 1, numRefs do
-		table.insert(out, precook(refs[{{i},{}}], n))
+		table.insert(out, precook(refs[i], n))
 	end
 	return out
 end
@@ -96,8 +96,8 @@ function Cider:counts2vec(cnts)
 		local df = 0.0
 		if self.documentFrequency[ngram] then
 			df = math.log(self.documentFrequency[ngram])
-		
-		local n = ngram:size(2)
+		end
+		local n = ngram:size(1)
 		vec[n][ngram] = (self.refLen - df) * termFreq
 		norm[n] = norm[n] + (vec[n][ngram])^2
 		
@@ -120,6 +120,7 @@ function Cider:sim(vecTst, vecRef, normTst, normRef, lengthTst, lengthRef)
 		end
 		if (normTst[n] ~= 0) and (normRef[n] ~= 0) then
 			val[n] = val[n] / (normTst[n] * normRef[n])
+		end
 		val[n] = val[n] * math.exp(-(delta^2)/(2*(self.sigma)^2))
 	end
 	return val

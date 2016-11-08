@@ -13,18 +13,22 @@ local function precook(seq, n)
 	for k = 1, n do
 		for i = 1, seqLength-k+1 do
 			local flag = 0
+			local ngram = seq[i]
 			for j = 1, k do
 				if seq[i+j-1] == 0 then
 					flag = 1
 					break
+				elseif j > 1 then
+					ngram = ngram .. ' ' .. seq[i+j-1]
 				end
 			end
 			if flag == 0 then
-				local ngram = seq[{{i, i+k-1}}]
 				if not counts[ngram] then
-					counts[ngram] = 1
+					counts[ngram] = {}
+					counts[ngram][1] = 1
+					counts[ngram][2] = k
 				else
-					counts[ngram] = counts[ngram] + 1
+					counts[ngram][1] = counts[ngram][1] + 1
 				end
 			else
 				break
@@ -64,11 +68,11 @@ function Cider:computeDocFreq()
 		for _, ref in pairs(refs) do
 			for ngram, _ in pairs(ref) do
 				if not ngrams[ngram] then
-					table.insert(ngrams, ngram)
+					ngrams[ngram] = 1
 				end
 			end
 		end
-		for _, ngram in pairs(ngrams) do
+		for ngram, _ in pairs(ngrams) do
 			if not self.documentFrequency[ngram] then
 				self.documentFrequency[ngram] = 1
 			else
@@ -97,12 +101,12 @@ function Cider:counts2vec(cnts)
 		if self.documentFrequency[ngram] then
 			df = math.log(self.documentFrequency[ngram])
 		end
-		local n = ngram:size(1)
-		vec[n][ngram] = (self.refLen - df) * termFreq
+		local n = termFreq[2]
+		vec[n][ngram] = (self.refLen - df) * termFreq[1]
 		norm[n] = norm[n] + (vec[n][ngram])^2
 		
 		if n == 1 then
-			length = length + termFreq
+			length = length + termFreq[1]
 		end
 	end
 	norm = torch.sqrt(norm)
@@ -115,7 +119,7 @@ function Cider:sim(vecTst, vecRef, normTst, normRef, lengthTst, lengthRef)
 	for i = 1, self.n do
 		for ngram, _ in pairs(vecTst[i]) do
 			if vecRef[i][ngram] then
-				val[i] = val[i] + min(vecTst[i][ngram], vecRef[i][ngram]) * vecRef[i][ngram]
+				val[i] = val[i] + math.min(vecTst[i][ngram], vecRef[i][ngram]) * vecRef[i][ngram]
 			end
 		end
 		if (normTst[i] ~= 0) and (normRef[i] ~= 0) then
@@ -133,7 +137,7 @@ function Cider:computeCider()
 		local test = self.ctest[i]
 		local refs = self.crefs[i]
 		local vec, norm, length = self:counts2vec(test)
-		local score = torch.FloatTensor(self.n):zero()
+		local score = torch.Tensor(self.n):zero()
 		for _, ref in pairs(refs) do
 			local vecRef, normRef, lengthRef = self:counts2vec(ref)
 			local val = self:sim(vec, vecRef, norm, normRef, length, lengthRef)

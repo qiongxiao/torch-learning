@@ -113,29 +113,29 @@ function Cider:sim(vecTst, vecRef, normTst, normRef, lengthTst, lengthRef)
 	local delta = lengthTst - lengthRef
 	local val = torch.Tensor(self.n):zero()
 	for i = 1, self.n do
-		for ngram, _ in pairs(vecTst[n]) do
-			if vecRef[n][ngram] then
-				val[n] = val[n] + min(vecTst[n][ngram], vecRef[n][ngram]) * vecRef[n][ngram]
+		for ngram, _ in pairs(vecTst[i]) do
+			if vecRef[i][ngram] then
+				val[i] = val[i] + min(vecTst[i][ngram], vecRef[i][ngram]) * vecRef[i][ngram]
 			end
 		end
-		if (normTst[n] ~= 0) and (normRef[n] ~= 0) then
-			val[n] = val[n] / (normTst[n] * normRef[n])
+		if (normTst[i] ~= 0) and (normRef[i] ~= 0) then
+			val[i] = val[i] / (normTst[i] * normRef[i])
 		end
-		val[n] = val[n] * math.exp(-(delta^2)/(2*(self.sigma)^2))
+		val[i] = val[i] * math.exp(-(delta^2)/(2*(self.sigma)^2))
 	end
 	return val
 end
 
 function Cider:computeCider()
 	self.refLen = math.log(#self.crefs)
-	local scores = torch.Tensor(self.refLen):zero()
-	for i = 1, self.refLen do
+	local scores = torch.Tensor(#self.crefs):zero()
+	for i = 1, #self.crefs do
 		local test = self.ctest[i]
 		local refs = self.crefs[i]
 		local vec, norm, length = self:counts2vec(test)
 		local score = torch.FloatTensor(self.n):zero()
 		for _, ref in pairs(refs) do
-			local vecRef, normRef, lengthRef = counts2vec(ref)
+			local vecRef, normRef, lengthRef = self:counts2vec(ref)
 			local val = self:sim(vec, vecRef, norm, normRef, length, lengthRef)
 			score = torch.add(score, val)
 		end
@@ -150,7 +150,7 @@ end
 function Cider:computeScore()
 	self:computeDocFreq()
 	local scores = self:computeCider()
-	return torch.mean(scores), scores
+	return torch.mean(scores), scores:totable()
 end
 
 return M.Cider

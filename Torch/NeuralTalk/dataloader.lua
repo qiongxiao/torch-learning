@@ -102,6 +102,7 @@ function DataLoader:scorerCompute()
 	local s = {}
 	for _, scorer in self.scorers do
 		local sa, ss = scorer:computeScore()
+		s[scorer.type] = {score=sa, scores=ss}
 	end
 	return s
 end

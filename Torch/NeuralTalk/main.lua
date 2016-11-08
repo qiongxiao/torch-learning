@@ -55,8 +55,8 @@ if opt.testOnly then
 	return
 end
 
-local startEpoch = checkpoint and checkpoint.epoch + 1 or 1
-local bestLoss = math.huge
+local startEpoch = checkpoint and checkpoint.epoch + 1 or opt.startEpoch
+local bestLoss = checkpoint and checkpoint.bestLoss or math.huge
 for epoch = startEpoch, opt.maxEpochs do
 	local finetune = false
 	if opt.finetuneAfter > 0 and epoch >= opt.finetuneAfter then
@@ -84,9 +84,9 @@ for epoch = startEpoch, opt.maxEpochs do
 	plotter:add('Train Loss - Epoch', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Validation', epoch, testLoss)
-	
+	plotter:add('CIDEr', 'Validation', epoch, scores['CIDEr']['score'])
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
-		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, opt)
+		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, bestLoss, opt)
 		plotter:checkpoint()
 		if opt.maxCheckpointsNum > 0 and (epoch/opt.checkEvery) > opt.maxCheckpointsNum then
 			checkpoints.cleanModel(epoch - opt.checkEvery*opt.maxCheckpointsNum, opt)

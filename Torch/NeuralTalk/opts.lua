@@ -32,9 +32,11 @@ function M.parse(arg)
 	cmd:option('-batchsize',		16,			'mini-batch size (1 = pure stochastic)')
 	cmd:option('-testOnly',			'false',	'Run on validation set only')
 	cmd:option('-finetuneAfter',	-1,			'finetune after * epochs: -1 disable | positve integer')
+	cmd:option('-startEpoch',		1,			'staring epoch number')
 	------------- Checkpoint options ------------------
 	cmd:option('-save',				'checkpoints',	'Directory in which to save checkpoints')
 	cmd:option('-resume',			'none',			'Resume from the latest checkpoint in this directory')
+	cmd:option('-resumeType',		'latest',		'Options: latest | best')
 	cmd:option('-checkEvery',		1,				'checkpoint every # epcoh: -1 disable | positve integer')
 	cmd:option('-maxCheckpointsNum',5,				'max number of checkpoints: -1 disable | positve interger')
 	------------- Plotting options --------------------

@@ -210,7 +210,7 @@ function Trainer:test(epoch, dataloader)
 	self.cnn:training()
 	self.feature2seq:training()
 
-	print((' * Finished epoch # %d    Err: %7.3f    CIDEr: %7.3f\n'):format(epoch, lossSum / N, scores['CIDEr']['score']))
+	print((' * Finished epoch # %d    Loss: %7.3f    CIDEr: %7.3f\n'):format(epoch, lossSum / N, scores['CIDEr']['score']))
 
 	collectgarbage()
 	return lossSum / N, out, scores

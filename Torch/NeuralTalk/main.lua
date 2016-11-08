@@ -50,8 +50,6 @@ if opt.testOnly then
 		loader = valLoader
 	end
 	local testLoss, out, scores = trainer:test(0, loader)
-	print('<Testing> * Loss:', testLoss)
-	print('<Testing> * Scores:', scores)
 	utils.writeJson('result/predict_caption.json', out)
 	utils.writeJson('result/predict_scores.json', scores)
 	return
@@ -100,8 +98,6 @@ end
 
 if (opt.dataset == 'flickr8k') then
 	local testLoss, out, scores = trainer:test(0, testLoader)
-	print('<Testing> * Loss:', testLoss)
-	print('<Testing> * Scores:', scores)
 	utils.writeJson('result/test_predict_caption.json', out)
 	utils.writeJson('result/test_predict_scores.json', scores)
 end

@@ -59,10 +59,10 @@ end
 function Cider:computeDocFreq()
 	self.documentFrequency = {}
 	local maxFre = -1
-	for _, refs in pairs(self.crefs):
+	for _, refs in pairs(self.crefs) do
 		local ngrams = {}
-		for _, ref in pairs(refs):
-			for ngram, _ in pairs(ref):
+		for _, ref in pairs(refs) do
+			for ngram, _ in pairs(ref) do
 				if not ngrams[ngram] then
 					table.insert(ngrams, ngram)
 				end
@@ -85,7 +85,8 @@ function Cider:computeDocFreq()
 end
 
 function Cider:counts2vec(cnts)
-	local vec = {}, norm = torch.Tensor(self.n):zero()
+	local vec = {}
+	local norm = torch.Tensor(self.n):zero()
 	for i = 1, self.n do
 		local dict = {}
 		table.insert(vec, dict)
@@ -98,10 +99,10 @@ function Cider:counts2vec(cnts)
 		
 		local n = ngram:size(2)
 		vec[n][ngram] = (self.refLen - df) * termFreq
-		norm[n] += (vec[n][ngram])^2
+		norm[n] = norm[n] + (vec[n][ngram])^2
 		
 		if n == 1 then
-			length += termFreq
+			length = length + termFreq
 		end
 	end
 	norm = torch.sqrt(norm)
@@ -114,7 +115,7 @@ function Cider:sim(vecTst, vecRef, normTst, normRef, lengthTst, lengthRef)
 	for i = 1, self.n do
 		for ngram, _ in pairs(vecTst[n]) do
 			if vecRef[n][ngram] then
-				val[n] += min(vecTst[n][ngram], vecRef[n][ngram]) * vecRef[n][ngram]
+				val[n] = val[n] + min(vecTst[n][ngram], vecRef[n][ngram]) * vecRef[n][ngram]
 			end
 		end
 		if (normTst[n] ~= 0) and (normRef[n] ~= 0) then

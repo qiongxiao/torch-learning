@@ -1,6 +1,6 @@
 --[[
 --
---  some code from https://github.com/facebook/fb.resnet.torch/blob/master/main.lua
+--  code adaption from https://github.com/facebook/fb.resnet.torch/blob/master/main.lua
 --
 --]]
 require 'torch'
@@ -49,9 +49,11 @@ if opt.testOnly then
 	else
 		loader = valLoader
 	end
-	local testLoss, out = trainer:test(0, loader)
+	local testLoss, out, scores = trainer:test(0, loader)
 	print('<Testing> * Loss:', testLoss)
+	print('<Testing> * Scores:', scores)
 	utils.writeJson('result/predict_caption.json', out)
+	utils.writeJson('result/predict_scores.json', scores)
 	return
 end
 
@@ -68,8 +70,9 @@ for epoch = startEpoch, opt.maxEpochs do
 	trainLoss = trainer:train(epoch, trainLoader, finetune, plotter)
 
 	-- Run model on validation set
-	local testLoss, out = trainer:test(epoch, valLoader)
+	local testLoss, out, scores = trainer:test(epoch, valLoader)
 	utils.writeJson('result/val_predict_caption_' .. epoch .. '.json', out)
+	utils.writeJson('result/val_predict_scores_' .. epoch .. '.json', scores)
 	
 	local bestModel = false
 	if testLoss < bestLoss then
@@ -96,7 +99,9 @@ for epoch = startEpoch, opt.maxEpochs do
 end
 
 if (opt.dataset == 'flickr8k') then
-	local testLoss, out = trainer:test(0, testLoader)
+	local testLoss, out, scores = trainer:test(0, testLoader)
 	print('<Testing> * Loss:', testLoss)
+	print('<Testing> * Scores:', scores)
 	utils.writeJson('result/test_predict_caption.json', out)
+	utils.writeJson('result/test_predict_scores.json', scores)
 end

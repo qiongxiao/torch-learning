@@ -83,7 +83,7 @@ end
 
 function DataLoader:scorerInit(scorerTypes)
 	self.scorers = {}
-	for _, v in scorerTypes do
+	for _, v in pairs(scorerTypes) do
 		table.insert(self.scorers, Scorer(v))
 	end
 end
@@ -92,7 +92,7 @@ function DataLoader:scorerUpdate(seq, indices)
 	local batchsize = seq:size(1)
 	for i = 1, batchsize do
 		local captions = self.dataset:getCaptions(indices[i])
-		for _, scorer in self.scorers do
+		for _, scorer in pairs(self.scorers) do
 			scorer:update(captions, seq[i])
 		end
 	end
@@ -100,7 +100,7 @@ end
 
 function DataLoader:scorerCompute()
 	local s = {}
-	for _, scorer in self.scorers do
+	for _, scorer in pairs(self.scorers) do
 		local sa, ss = scorer:computeScore()
 		s[scorer.type] = {score=sa, scores=ss}
 	end

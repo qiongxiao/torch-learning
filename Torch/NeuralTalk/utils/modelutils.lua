@@ -1,3 +1,9 @@
+--[[
+--
+--	general operation for models setup
+--
+--]]
+
 require 'loadcaffe'
 
 local modelutils = {}

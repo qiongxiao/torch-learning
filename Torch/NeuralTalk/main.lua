@@ -76,7 +76,7 @@ for epoch = startEpoch, opt.maxEpochs do
 	if scores['CIDEr']['score'] > bestLoss then
 		bestModel = true
 		bestLoss = scores['CIDEr']['score']
-		print('<Training> * Best model CIDEr:', scores)
+		print('<Training> * Best model CIDEr:', bestLoss)
 	end
 	collectgarbage()
 	

@@ -8,26 +8,15 @@ require 'nn'
 require 'models.expander'
 require 'models.dynamicLSTM'
 
-local netutils = require 'utils.netutils'
-
 local layer, parent = torch.class('nn.FeatureToSeq', 'nn.Module')
 
-function layer:__init(opt, nFeatures, vocabSize)
+function layer:__init(opt, vocabSize)
 	parent.__init(self)
 
 	-- For thin model
 	self.opt = opt
-	self.nFeatures = nFeatures
 	self.vocabSize = vocabSize
-	local backend
-	if opt.backend == 'cudnn' then
-		require 'cudnn'
-		backend = cudnn
-	else
-		backend = nn
-	end
 
-	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend.ReLU(true))
 	self.expander = nn.Expander(opt.seqPerImg)
 
 	self.encodingSize = opt.encodingSize
@@ -42,12 +31,10 @@ function layer:__init(opt, nFeatures, vocabSize)
 	self.inferenceMax = opt.inferenceMax
 	self.temperature = opt.temperature
 
-	netutils.linearInit(self.linear)
-
 end
 
 function layer:getModulesList()
-	return {self.linear, self.expander, self.lstm.cell, self.lookupTable}
+	return {self.expander, self.lstm.cell, self.lookupTable}
 end
 
 function layer:createSlices()
@@ -59,17 +46,14 @@ function layer:shareSlices()
 end
 
 function layer:parameters()
-	local p0,g0 = self.linear:parameters()
 	local p1,g1 = self.lstm:parameters()
 	local p2,g2 = self.lookupTable:parameters()
 
 	local params = {}
-	for k,v in pairs(p0) do table.insert(params, v) end
 	for k,v in pairs(p1) do table.insert(params, v) end
 	for k,v in pairs(p2) do table.insert(params, v) end
 
 	local grad_params = {}
-	for k,v in pairs(g0) do table.insert(grad_params, v) end
 	for k,v in pairs(g1) do table.insert(grad_params, v) end
 	for k,v in pairs(g2) do table.insert(grad_params, v) end
 
@@ -78,14 +62,12 @@ function layer:parameters()
 end
 
 function layer:training()
-	self.linear:training()
 	self.expander:training()
 	self.lstm:training()
 	self.lookupTable:training()
 end
 
 function layer:evaluate()
-	self.linear:evaluate()
 	self.expander:evaluate()
 	self.lstm:evaluate()
 	self.lookupTable:evaluate()
@@ -93,7 +75,7 @@ end
 
 --[[
 	input is a table of:
-		1.	torch.Tensor of size "batchsize(unexpanded) * nFeatures"
+		1.	torch.Tensor of size "batchsize(unexpanded) * encodingSize"
 		2.	torch.LongTensor of size "batchsize(expanded) * (seqLength+1)", elements 1..M
 			where M = vocabSize
 	output:
@@ -102,12 +84,11 @@ end
 function layer:updateOutput(input)
 	local imgs = input[1]
 	local seq = input[2]
-	assert(imgs:size(2) == self.nFeatures)
+	assert(imgs:size(2) == self.encodingSize)
 	assert(seq:size(2) == self.seqLength+1)
 
-	-- size "batchsize(unexpanded) * nFeatures" --> size "batchsize(expanded) * encodingSize"
-	self.linear:forward(imgs)
-	local feats = self.expander:forward(self.linear.output)
+	-- size "batchsize(unexpanded) * encodingSize" --> size "batchsize(expanded) * encodingSize"
+	local feats = self.expander:forward(imgs)
 
 	local batchsize = seq:size(1)
 
@@ -128,24 +109,20 @@ end
 function layer:updateGradInput(input, gradOutput)
 	local dlstmInput = self.lstm:backward(self.lstmInput, gradOutput:transpose(1, 2))
 	local dlookupTableInput = self.lookupTable:backward(input[2], dlstmInput:narrow(1, 2, self.seqLength+1):transpose(1, 2))
-	self.expander:backward(self.linear.output, dlstmInput[1])
-	dImgs = self.linear:backward(input[1], self.expander.gradInput)
-	self.gradInput = {dImgs, torch.Tensor()}
+	self.expander:backward(input[1], dlstmInput[1])
+	self.gradInput = {self.expander.gradInput, torch.Tensor()}
 	return self.gradInput
 end
 
 --[[
 	input:
-		torch.Tensor of size "batchsize * nFeatures"
+		torch.Tensor of size "batchsize * encodingSize"
 	output:
 		torch.Tensor of size "batchsize * seqLength"
 --]]
 function layer:inference(imgs)
 
-	-- size "batchsize * nFeatures" --> size "batchsize * encodingSize"
-	local feats = self.linear:forward(imgs)
-
-	local output, outputProbs = self.lstm:inference(feats, self.lookupTable)
+	local output, outputProbs = self.lstm:inference(imgs, self.lookupTable)
 
 	output = output:narrow(1, 2, self.seqLength):transpose(1, 2)
 	outputProbs = outputProbs:narrow(1, 2, self.seqLength):transpose(1, 2)

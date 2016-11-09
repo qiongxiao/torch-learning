@@ -1,6 +1,9 @@
 --[[
 --
---  Generic model creating code.
+--  code from https://github.com/facebook/fb.resnet.torch/blob/master/models/init.lua
+--
+--  Generic model creating code. For the specific ResNet model see
+--  models/resnet.lua
 --
 --]]
 require 'nn'
@@ -58,9 +61,15 @@ function M.setup(opt, vocabSize, checkpoint)
 			if torch.type(orig) ~= 'nn.Dropout' then
 				cnn:add(nn.Dropout(opt.cnnFCdropout))
 			end
-		else
-			-- if cnn model already ends at feature layer
-			nFeatures = opt.cnnFeatures
+			local backend
+			if opt.backend == 'cudnn' then
+				require 'cudnn'
+				backend = cudnn
+			else
+				backend = nn
+			end
+			cnn:add(nn.Linear(nFeatures, opt.encodingSize))
+			cnn:add(backend.ReLU(true))
 		end
 	end
 
@@ -80,10 +89,10 @@ function M.setup(opt, vocabSize, checkpoint)
 		modelutils.preproFeature2seq(feature2seq, feature2seqTMP)
 	elseif not opt.skipFlag then
 		print('<model init> => Creating feature2seq model')
-		feature2seq = nn.FeatureToSeq(opt, nFeatures, vocabSize)
+		feature2seq = nn.FeatureToSeq(opt, vocabSize)
 	else
 		print('<model init> => Creating feature2seq skipping model')
-		feature2seq = nn.FeatureToSeqSkip(opt, nFeatures, vocabSize)
+		feature2seq = nn.FeatureToSeqSkip(opt, vocabSize)
 	end
 	
 	local criterion = nn.SeqCrossEntropyCriterion()
@@ -92,24 +101,6 @@ function M.setup(opt, vocabSize, checkpoint)
 		cnn:float()
 		feature2seq:float()
 		criterion:float()
-	-- Wrap the model with DataParallelTable, if using more than one GPU
-	elseif opt.nGPU > 1 then
-		local gpus = torch.range(1, opt.nGPU):totable()
-		local fastest, benchmark = cudnn.fastest, cudnn.benchmark
-
-		local dpt = nn.DataParallelTable(1, true, true)
-			:add(cnn, gpus)
-			:threads(function()
-				local cudnn = require 'cudnn'
-				cudnn.fastest, cudnn.benchmark = fastest, benchmark
-			end)
-		dpt.gradInput = nil
-		-- Set the CUDNN flags
-		cudnn.fastest = true
-		cudnn.benchmark = true
-		cnn = dpt:cuda()
-		feature2seq:cuda()
-		criterion:cuda()
 	else
 		-- Set the CUDNN flags
 		cudnn.fastest = true

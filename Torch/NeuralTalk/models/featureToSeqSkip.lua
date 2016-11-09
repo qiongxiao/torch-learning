@@ -8,33 +8,20 @@ require 'nn'
 local lstmCell = require 'models.lstmCell'
 require 'models.expander'
 
-local netutils = require 'utils.netutils'
-
 local layer, parent = torch.class('nn.FeatureToSeqSkip', 'nn.Module')
 
-function layer:__init(opt, nFeatures, vocabSize)
+function layer:__init(opt, vocabSize)
 	parent.__init(self)
 	
 	-- For thin model
 	self.opt = opt
-	self.nFeatures = nFeatures
 	self.vocabSize = vocabSize
-	local backend
-	if opt.backend == 'cudnn' then
-		require 'cudnn'
-		backend = cudnn
-	else
-		backend = nn
-	end
 
-	self.linear = nn.Sequential():add(nn.Linear(nFeatures, opt.encodingSize)):add(backend.ReLU(true))
 	self.expander = nn.Expander(opt.seqPerImg)
-
 	self.encodingSize = opt.encodingSize
 	self.rDepth = opt.rDepth
 	self.seqLength = opt.seqLength
 	self.hiddenStateSize = opt.hiddenStateSize
-
 	self.lstmCell = lstmCell(self.encodingSize, self.vocabSize+1, self.hiddenStateSize, self.rDepth, opt.lstmDropout)
 
 	self.lookupTable = nn.LookupTable(self.vocabSize+1, self.encodingSize)
@@ -44,7 +31,6 @@ function layer:__init(opt, nFeatures, vocabSize)
 
 	self:_createInitState(1)
 
-	netutils.linearInit(self.linear)
 end
 
 function layer:_createInitState(batchsize)
@@ -83,21 +69,18 @@ function layer:shareSlices()
 end
 
 function layer:getModulesList()
-	return {self.linear, self.expander, self.lstmCell, self.lookupTable}
+	return {self.expander, self.lstmCell, self.lookupTable}
 end
 
 function layer:parameters()
-	local p0,g0 = self.linear:parameters()
 	local p1,g1 = self.lstmCell:parameters()
 	local p2,g2 = self.lookupTable:parameters()
 
 	local params = {}
-	for k,v in pairs(p0) do table.insert(params, v) end
 	for k,v in pairs(p1) do table.insert(params, v) end
 	for k,v in pairs(p2) do table.insert(params, v) end
 
 	local grad_params = {}
-	for k,v in pairs(g0) do table.insert(grad_params, v) end
 	for k,v in pairs(g1) do table.insert(grad_params, v) end
 	for k,v in pairs(g2) do table.insert(grad_params, v) end
 
@@ -106,7 +89,6 @@ function layer:parameters()
 end
 
 function layer:training()
-	self.linear:training()
 	self.expander:training()
 	if self.slices == nil then self:createSlices() end -- create these lazily if needed
 	--self:shareSlices()
@@ -115,7 +97,6 @@ function layer:training()
 end
 
 function layer:evaluate()
-	self.linear:evaluate()
 	self.expander:evaluate()
 	if self.slices == nil then self:createSlices() end -- create these lazily if needed
 	--self:shareSlices()
@@ -125,7 +106,7 @@ end
 
 --[[
 	input is a table of:
-		1.	torch.Tensor of size "batchsize(unexpanded) * nFeatures"
+		1.	torch.Tensor of size "batchsize(unexpanded) * encodingSize"
 		2.	torch.LongTensor of size "batchsize(expanded) * (seqLength+1)", elements 1..M
 			where M = vocabSize
 	output:
@@ -137,12 +118,11 @@ function layer:updateOutput(input)
 	local seq = input[2]:transpose(1, 2)
 	if self.slices == nil then self:createSlices() end -- create these lazily if needed
 	--self:shareSlices()
-	assert(imgs:size(2) == self.nFeatures)
+	assert(imgs:size(2) == self.encodingSize)
 	assert(seq:size(1) == self.seqLength+1)
 
-	-- size "batchsize(unexpanded) * nFeatures" --> size "batchsize(expanded) * encodingSize"
-	self.linear:forward(imgs)
-	local feats = self.expander:forward(self.linear.output)
+	-- size "batchsize(unexpanded) * encodingSize" --> size "batchsize(expanded) * encodingSize"
+	local feats = self.expander:forward(imgs)
 
 	local batchsize = feats:size(1)
 	self.output:resize(self.seqLength+2, batchsize, self.vocabSize+1)
@@ -207,15 +187,14 @@ function layer:updateGradInput(input, gradOutput)
 			self.lookupTables[t]:backward(it, dxt)
 		end
 	end
-	self.expander:backward(self.linear.output, dFeats)
-	dImgs = self.linear:backward(input[1], self.expander.gradInput)
-	self.gradInput = {dImgs, torch.Tensor()}
+	self.expander:backward(input[1], dFeats)
+	self.gradInput = {self.expander.gradInput, torch.Tensor()}
 	return self.gradInput
 end
 
 --[[
 	input:
-		torch.Tensor of size "batchsize * nFeatures"
+		torch.Tensor of size "batchsize * encodingSize"
 	output:
 		torch.Tensor of size "batchsize * seqLength"
 --]]
@@ -223,9 +202,7 @@ function layer:inference(imgs)
 	local inferenceMax = self.inferenceMax
 	local temperature = self.temperature
 
-	-- size "batchsize * nFeatures" --> size "batchsize * encodingSize"
-	local feats = self.linear:forward(imgs)
-
+	local feats = imgs
 	local batchsize = feats:size(1)
 	self:_createInitState(batchsize)
 	local state = self.initState

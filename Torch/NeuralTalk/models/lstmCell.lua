@@ -1,11 +1,9 @@
 --[[
 --
---  code adaption from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LSTM.lua'
+--  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LSTM.lua'
 --
 --]]
 require 'nngraph'
-
-local netutils = require 'utils.netutils'
 
 --[[
 	input: a table of 
@@ -79,11 +77,7 @@ local function lstmCell(inputSize, outputSize, hiddenStateSize, rDepth, dropout)
 	local logsoft = nn.LogSoftMax()(proj)
 	table.insert(outputs, logsoft)
 
-	local cell = nn.gModule(inputs, outputs)
-
-	netutils.linearInit(cell)
-
-	return cell
+	return nn.gModule(inputs, outputs)
 end
 
 return lstmCell

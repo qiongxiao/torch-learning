@@ -1,9 +1,3 @@
---[[
---
---	general operation for models setup
---
---]]
-
 require 'loadcaffe'
 
 local modelutils = {}
@@ -12,9 +6,9 @@ function modelutils.createFeature2seq(feature2seqTMP)
 	local feature2seq
 	local netType = torch.type(feature2seqTMP)
 	if netType == 'nn.FeatureToSeqSkip' then
-		feature2seq = nn.FeatureToSeqSkip(feature2seqTMP.opt, feature2seqTMP.nFeatures, feature2seqTMP.vocabSize)
+		feature2seq = nn.FeatureToSeqSkip(feature2seqTMP.opt, feature2seqTMP.vocabSize)
 	else
-		feature2seq = nn.FeatureToSeq(feature2seqTMP.opt, feature2seqTMP.nFeatures, feature2seqTMP.vocabSize)
+		feature2seq = nn.FeatureToSeq(feature2seqTMP.opt, feature2seqTMP.vocabSize)
 	end
 	if feature2seqTMP.opt.nGPU > 0 then
 		feature2seqTMP:cuda()
@@ -55,6 +49,15 @@ function modelutils.buildCNN(opt)
 
 		cnn_part:add(layer)
 	end
+	cnn_part:add(nn.Linear(4096, opt.encodingSize))
+	local backend
+	if opt.backend == 'cudnn' then
+		require 'cudnn'
+		backend = cudnn
+	else
+		backend = nn
+	end
+	cnn_part:add(backend.ReLU(true))
 	return cnn_part
 end
 

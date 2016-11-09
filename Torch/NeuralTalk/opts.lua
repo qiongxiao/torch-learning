@@ -1,6 +1,6 @@
 --[[
 --
--- code from https://github.com/facebook/fb.resnet.torch/blob/master/opts.lua
+-- code adaption from https://github.com/facebook/fb.resnet.torch/blob/master/opts.lua
 --
 --]]
 
@@ -20,10 +20,9 @@ function M.parse(arg)
 	cmd:option('-manualSeed',	123,		'Manually set RNG seed')
 	cmd:option('-backend',		'cudnn',	'Option: cudnn | nn')
 	cmd:option('-verbose',		'true',		'whether verbose a example prediction caption for every val batch: false | true')
-	cmd:option('-nGPU',			1,			'GPU number: 0 CPU | positve integer')
+	cmd:option('-nGPU',			1,			'GPU number: 0 CPU | positve integer GPU')
 	------------- Data options ------------------------
 	cmd:option('-dataAug',				0,		'whether augment data : 0 (false) | 1 (true)')
-	cmd:option('-nThreads',				1,		'number of data loading threads, positve integer')
 	cmd:option('-seqLength',			30,		'length of caption, positve integer')
 	cmd:option('-seqPerImg',			5,		'number of captions per image, positve integer')
 	cmd:option('-wordCountThreshold',	5,		'threshould of the number of word appearance, positve integer')
@@ -35,7 +34,7 @@ function M.parse(arg)
 	cmd:option('-startEpoch',		1,			'staring epoch number')
 	------------- Checkpoint options ------------------
 	cmd:option('-save',				'checkpoints',	'Directory in which to save checkpoints')
-	cmd:option('-resume',			'none',			'Resume from the latest checkpoint in this directory')
+	cmd:option('-resume',			'none',			'Resume from the checkpoint in this directory')
 	cmd:option('-resumeType',		'latest',		'Options: latest | best')
 	cmd:option('-checkEvery',		1,				'checkpoint every # epcoh: -1 disable | positve integer')
 	cmd:option('-maxCheckpointsNum',5,				'max number of checkpoints: -1 disable | positve interger')
@@ -81,7 +80,6 @@ function M.parse(arg)
 	cmd:option('-cnnProto',			'none',		'Path to caffe cnn model prototxt')
 	cmd:option('-cnnCaffelayernum',	38,			'the layer number of last feature layer in caffe cnn model')
 	cmd:option('-backendCaffe',		'nn',		'Options: cudnn | nn (for caffe load)')
-	cmd:option('-cnnFeatures',		4096,		'the feature number of last feature layer in cnn model')
 	------------- lstm Model init options -------------
 	cmd:option('-retrainlstm',		'none',		'Path to lstm model (t7) to retrain with')
 
@@ -111,13 +109,9 @@ function M.parse(arg)
 		opt.maxEpochs = opt.maxEpochs == 0 and 90 or opt.maxEpochs
 	elseif opt.dataset == 'flickr8k' then
 		opt.shortcutType = opt.shortcutType == '' and 'B' or opt.shortcutType
-		opt.maxEpochs = opt.maxEpochs == 0 and 90 or opt.maxEpochs
+		opt.maxEpochs = opt.maxEpochs == 0 and 200 or opt.maxEpochs
 	else
 		cmd:error('unknown dataset: ' .. opt.dataset)
-	end
-
-	if opt.nThreads < 1 then
-		cmd:error('error: invalid threads number')
 	end
 
 	if opt.backend ~= 'cudnn' and opt.backend~= 'nn' then

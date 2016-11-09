@@ -1,6 +1,6 @@
 --[[
 --
---  code adaption from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LanguageModel.lua'
+--  code from 'https://github.com/karpathy/neuraltalk2/blob/master/misc/LanguageModel.lua'
 --
 --]]
 require 'nn'

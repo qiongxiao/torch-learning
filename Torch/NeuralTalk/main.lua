@@ -56,7 +56,7 @@ if opt.testOnly then
 end
 
 local startEpoch = checkpoint and checkpoint.epoch + 1 or opt.startEpoch
-local bestLoss = checkpoint and checkpoint.bestLoss or math.huge
+local bestLoss = checkpoint and checkpoint.bestLoss or 0
 for epoch = startEpoch, opt.maxEpochs do
 	local finetune = false
 	if opt.finetuneAfter > 0 and epoch >= opt.finetuneAfter then
@@ -73,10 +73,10 @@ for epoch = startEpoch, opt.maxEpochs do
 	utils.writeJson('result/val_predict_scores_' .. epoch .. '.json', scores)
 	
 	local bestModel = false
-	if testLoss < bestLoss then
+	if scores['CIDEr']['score'] > bestLoss then
 		bestModel = true
-		bestLoss = testLoss
-		print('<Training> * Best model Loss:', testLoss)
+		bestLoss = scores['CIDEr']['score']
+		print('<Training> * Best model CIDEr:', scores)
 	end
 	collectgarbage()
 	

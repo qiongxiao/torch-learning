@@ -93,14 +93,14 @@ local function _singleReflen(reflens, option, testlen)
 	elseif option == 'average' then
 		reflen = torch.mean(reflens)
 	elseif option == 'closest' then
-		local reflenSize = reflen:size(1)
-		local minDif = math.abs(reflen[1]-testlen)
-		reflen = reflen[1]
+		local reflenSize = reflens:size(1)
+		local minDif = math.abs(reflens[1]-testlen)
+		reflen = reflens[1]
 		for i = 2, reflenSize do
-			local dif = math.abs(reflen[i]-testlen)
+			local dif = math.abs(reflens[i]-testlen)
 			if minDif > dif then
 				minDif = dif
-				reflen = reflen[i]
+				reflen = reflens[i]
 			end
 		end
 	else
@@ -136,7 +136,7 @@ function BLEU:computeScore(option)
 		local testlen = comps['testlen']
 		self._testlen = self._testlen + testlen
 
-		local reflen = self._singleReflen(comps['reflen'], option, testlen)
+		local reflen = _singleReflen(comps['reflen'], option, testlen)
 
 		self._reflen = self._reflen + reflen
 
@@ -165,7 +165,7 @@ function BLEU:computeScore(option)
 	local bleus = {}
 	bleu = 1
 	for k = 1, n do
-		bleu = bleu * (totalcomps['correct'][k] + tiny)/(comps['guess'][k] + small)
+		bleu = bleu * (totalcomps['correct'][k] + tiny)/(totalcomps['guess'][k] + small)
 		table.insert(bleus, bleu^(1/(k+1)))
 	end
 	local ratio = (self._testlen + tiny) / (self._reflen + small)

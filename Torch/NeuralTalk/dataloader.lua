@@ -37,7 +37,6 @@ function DataLoader.create(opt)
 end
 
 function DataLoader:__init(dataset, opt, split)
-	self.nThreads = opt.nThreads
 	self.seqPerImg = opt.seqPerImg
 	self.seqLength = opt.seqLength
 	self.batchsize = opt.batchsize

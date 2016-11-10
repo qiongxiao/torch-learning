@@ -7,21 +7,25 @@ function Scorer:__init(scorerType)
 		local Cider = require 'scorers.cider'
 		self.scorer = Cider(4, 6.0)
 		self.type = scorerType
+	elseif scorerType == 'BLEU' then
+		local BLEU = require 'scorers.bleu'
+		self.scorer = BLEU(4)
+		self.type = scorerType
 	else
 		error('invalid scorer type')
 	end
 end
 
 function Scorer:update(refs, test)
-	if self.type == 'CIDEr' then
-		self.scorer:append(refs, test)
-	else
-		error('invalid scorer when updating scorer')
-	end
+	self.scorer:append(refs, test)
 end
 
-function Scorer:computeScore()
-	return self.scorer:computeScore()
+function Scorer:computeScore(option)
+	if self.scorerType ~= 'BLEU' then
+		return self.scorer:computeScore()
+	else
+		return self.scorer:computeScore(option)
+	end
 end
 
 return M.Scorer

@@ -25,7 +25,7 @@ local function deepCopy(tbl)
 	return copy
 end
 
-function checkpoint.loadLatestInfo(opt)
+function checkpoint.loadCheckpointInfo(opt)
 	if opt.resume == 'none' then
 		return nil
 	end
@@ -37,7 +37,10 @@ function checkpoint.loadLatestInfo(opt)
 
 	print('<resuming> => Loading checkpoint ' .. latestPath)
 	local latest_info = torch.load(latestPath)
-	local optimState = torch.load(paths.concat(opt.resume, latest_info.optimFile))
+	local optimState
+	if opt.resumeType == 'latest' then
+		optimState = torch.load(paths.concat(opt.resume, latest_info.optimFile))
+	end
 
 	return latest_info, optimState
 end
@@ -79,7 +82,6 @@ function checkpoint.saveModel(epoch, model, optimState, isBestModel, bestLoss, o
 		epoch = epoch,
 		cnnModelFile = 'model_best_cnn.t7',
 		seqModelFile = 'model_best_seq.t7',
-		optimFile = optimFile,
 		bestLoss = bestLoss,
 	})
 		print('<checkpoint> => complete best model saving')

@@ -1,6 +1,6 @@
 --[[
 --
---  code imitated https://github.com/facebook/fb.resnet.torch/blob/master/train.lua
+--  code from https://github.com/facebook/fb.resnet.torch/blob/master/train.lua
 --
 --  The training loop and learning rate schedule
 --
@@ -8,8 +8,9 @@
 require 'torch'
 require 'cutorch'
 require 'nn'
-
 local optim = require 'optim'
+
+local netutils = require 'utils.netutils'
 
 local M = {}
 local Trainer = torch.class('cnn.Trainer', M)
@@ -167,7 +168,7 @@ function Trainer:test(epoch, dataloader)
 	local N = 0
 	local out = {}
 	
-	dataloader:scorerInit({'CIDEr'})
+	dataloader:scorerInit({'CIDEr', 'BLEU'})
 	
 	self.cnn:evaluate()
 	self.feature2seq:evaluate()
@@ -210,7 +211,7 @@ function Trainer:test(epoch, dataloader)
 	self.cnn:training()
 	self.feature2seq:training()
 
-	print((' * Finished epoch # %d    Loss: %7.3f    CIDEr: %7.3f\n'):format(epoch, lossSum / N, scores['CIDEr']['score']))
+	print((' * Finished epoch # %d    Loss: %7.3f    CIDEr: %7.3f    BLEU1: %7.3f    BLEU2: %7.3f    BLEU3: %7.3f    BLEU4: %7.3f\n'):format(epoch, lossSum / N, scores['CIDEr']['score'], scores['BLEU']['score'][1], scores['BLEU']['score'][2], scores['BLEU']['score'][3], scores['BLEU']['score'][4]))
 
 	collectgarbage()
 	return lossSum / N, out, scores
@@ -243,12 +244,18 @@ function Trainer:learningRate(epoch, mode)
 		else
 			return self.opt.lr * math.pow(0.5, decay)
 		end
-	else
+	elseif self.opt.decay ~= 'none' then
 		local decay = math.floor((epoch - 1) / self.opt.decay_every)
 		if mode == 'cnn' then 
 			return self.opt.cnnLr * math.pow(self.opt.decay_factor, decay)
 		else
 			return self.opt.lr * math.pow(self.opt.decay_factor, decay)
+		end
+	else
+		if mode == 'cnn' then 
+			return self.opt.cnnLr
+		else
+			return self.opt.lr
 		end
 	end
 

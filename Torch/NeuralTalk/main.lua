@@ -24,7 +24,7 @@ torch.manualSeed(opt.manualSeed)
 cutorch.manualSeedAll(opt.manualSeed)
 
 -- Load previous checkpoint, if it exists
-local checkpoint, optimState = checkpoints.loadLatestInfo(opt)
+local checkpoint, optimState = checkpoints.loadCheckpointInfo(opt)
 local plotter = Plotter(opt)
 
 -- Data loading
@@ -76,7 +76,9 @@ for epoch = startEpoch, opt.maxEpochs do
 	if scores['CIDEr']['score'] > bestLoss then
 		bestModel = true
 		bestLoss = scores['CIDEr']['score']
-		print('<Training> * Best model CIDEr:', bestLoss)
+		print('<Training> * Best model CIDEr:', scores['CIDEr']['score'])
+		utils.writeJson('result/val_best_predict_caption.json', out)
+		utils.writeJson('result/val_best_predict_scores.json', scores)
 	end
 	collectgarbage()
 	
@@ -84,7 +86,12 @@ for epoch = startEpoch, opt.maxEpochs do
 	plotter:add('Train Loss - Epoch', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Train', epoch, trainLoss)
 	plotter:add('Loss', 'Validation', epoch, testLoss)
-	plotter:add('CIDEr', 'Validation', epoch, scores['CIDEr']['score'])
+	plotter:add('Score', 'CIDEr', epoch, scores['CIDEr']['score'])
+	plotter:add('Score', 'BLEU_1', epoch, scores['BLEU']['score'][1])
+	plotter:add('Score', 'BLEU_2', epoch, scores['BLEU']['score'][2])
+	plotter:add('Score', 'BLEU_3', epoch, scores['BLEU']['score'][3])
+	plotter:add('Score', 'BLEU_4', epoch, scores['BLEU']['score'][4])
+	
 	if opt.checkEvery > 0 and epoch % opt.checkEvery == 0 then
 		checkpoints.saveModel(epoch, model, trainer.optimConfig, bestModel, bestLoss, opt)
 		plotter:checkpoint()

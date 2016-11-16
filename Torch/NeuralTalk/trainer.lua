@@ -1,6 +1,6 @@
 --[[
 --
---  code from https://github.com/facebook/fb.resnet.torch/blob/master/train.lua
+--  code imitated https://github.com/facebook/fb.resnet.torch/blob/master/train.lua
 --
 --  The training loop and learning rate schedule
 --

@@ -1,26 +1,48 @@
 --[[
 --
---  code from https://github.com/joeyhng/trainplot
+--  code adaption from https://github.com/joeyhng/trainplot
 --
 --]]
+require 'paths'
 local utils = require 'utils.utils'
 
 local M = {}
 local Plotter = torch.class('Plotter', M)
 
-function Plotter:__init(opt)
-	self.path = opt.plotPath .. '.json'
+function Plotter:__init(opt, checkpoint)
+	self.path = paths.concat(opt.save, 'plot/out.json')
 	self.figures = {}
-	self.checkpoint_path = opt.plotPath .. '_checkpoint.json'
+	self.checkpoint_path = paths.concat(opt.save, 'plot/out_checkpoint.json')
 	print('<plot init> loading plot')
 	if (not paths.filep(self.path)) then
 		paths.mkdir(paths.dirname(self.path))
 		self.figures['info_str'] = {created_time=io.popen('date'):read(), tag='Plot'}
 	end
-	if opt.resume ~= 'none' then
+	if checkpoint then
+		local startEpoch = checkpoint.epoch
 		if paths.filep(self.checkpoint_path) then
 			self.figures = utils.readJson(self.checkpoint_path)
-			print('<plot init> fininsh loading plot')
+			print('<plot init> correcting loading plot')
+			for name, fig in pairs(self.figures) do
+				local data = fig['data']
+				if name ~= 'Train Loss - Iteration' then
+					for _, plot in pairs(data) do
+						local y = plot['y']
+						local x = plot['x']
+						for k, v in pairs(y) do
+							if k > startEpoch then
+								y[k] = nil
+							end
+						end
+						for k, v in pairs(x) do
+							if k > startEpoch then
+								x[k] = nil
+							end
+						end
+					end
+				end
+			end
+			print('<plot init> finishing loading plot')
 		else
 			error(string.format('"%s" does not existed', self.checkpoint_path))
 		end
@@ -50,7 +72,7 @@ function Plotter:add(fig_id, plot_id, iter, data)
 	end
 	if not plot then
 		plot = {['name'] = plot_id, ['x'] = {}, ['y'] = {}}
-		tabinle.insert(fig_data, plot)
+		table.insert(fig_data, plot)
 	end
 	table.insert(plot['x'], iter)
 	table.insert(plot['y'], data)

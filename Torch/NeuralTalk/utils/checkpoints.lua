@@ -30,7 +30,12 @@ function checkpoint.loadCheckpointInfo(opt)
 		return nil
 	end
 
-	local latestPath = paths.concat(opt.resume, opt.resumeType .. '_info.t7')
+	local latestPath
+	if opt.resumeType == 'best' then
+		latestPath = paths.concat(opt.resume, 'best_info.t7')
+	else
+		latestPath = paths.concat(opt.resume, 'latest_info.t7')
+	end
 	if not paths.filep(latestPath) then
 		error('<resuming> checkpoint' .. latestPath .. 'does not exist')
 	end
@@ -59,13 +64,20 @@ function checkpoint.saveModel(epoch, model, optimState, isBestModel, bestLoss, o
 	print('<checkpoint> => end feature2seq copy')
 	
 	print('<checkpoint> => begin model saving')
+
+	local checkpointDir = paths.concat(opt.save, 'checkpoints')
+	if not paths.dirp(checkpointDir) then
+		os.execute('mkdir ' .. checkpointDir)
+	end
+
 	local cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
 	local seqModelFile = 'model_seq_' .. epoch .. '.t7'
 	local optimFile = 'optimState_' .. epoch .. '.t7'
-	torch.save(paths.concat(opt.save, cnnModelFile), cnn)
-	torch.save(paths.concat(opt.save, seqModelFile), feature2seq)
-	torch.save(paths.concat(opt.save, optimFile), optimState)
-	torch.save(paths.concat(opt.save, 'latest_info.t7'), {
+
+	torch.save(paths.concat(checkpointDir, cnnModelFile), cnn)
+	torch.save(paths.concat(checkpointDir, seqModelFile), feature2seq)
+	torch.save(paths.concat(checkpointDir, optimFile), optimState)
+	torch.save(paths.concat(checkpointDir, 'latest_info.t7'), {
 		epoch = epoch,
 		cnnModelFile = cnnModelFile,
 		seqModelFile = seqModelFile,
@@ -76,25 +88,30 @@ function checkpoint.saveModel(epoch, model, optimState, isBestModel, bestLoss, o
 	
 	if isBestModel then
 		print('<checkpoint> => begin best model saving')
-		torch.save(paths.concat(opt.save, 'model_best_cnn.t7'), cnn)
-		torch.save(paths.concat(opt.save, 'model_best_seq.t7'), feature2seq)
-		torch.save(paths.concat(opt.save, 'best_info.t7'), {
-		epoch = epoch,
+		torch.save(paths.concat(checkpointDir, 'model_best_cnn.t7'), cnn)
+		torch.save(paths.concat(checkpointDir, 'model_best_seq.t7'), feature2seq)
+		torch.save(paths.concat(checkpointDir, 'best_info.t7'), {
+		-- for finetuning from best model
+		epoch = 1,
 		cnnModelFile = 'model_best_cnn.t7',
 		seqModelFile = 'model_best_seq.t7',
 		bestLoss = bestLoss,
+		bestEpoch = epoch,
 	})
 		print('<checkpoint> => complete best model saving')
 	end
 end
 
 function checkpoint.cleanModel(epoch, opt)
+	local checkpointDir = paths.concat(opt.save, 'checkpoints')
+
 	local cnnModelFile = 'model_cnn_' .. epoch .. '.t7'
 	local seqModelFile = 'model_seq_' .. epoch .. '.t7'
 	local optimFile = 'optimState_' .. epoch .. '.t7'
-	local cnnPath = paths.concat(opt.save, cnnModelFile)
-	local seqPath = paths.concat(opt.save, seqModelFile)
-	local optimPath = paths.concat(opt.save, optimFile)
+
+	local cnnPath = paths.concat(checkpointDir, cnnModelFile)
+	local seqPath = paths.concat(checkpointDir, seqModelFile)
+	local optimPath = paths.concat(checkpointDir, optimFile)
 	
 	assert(paths.filep(cnnPath), 'Deleting file ' .. cnnPath .. 'not found')
 	assert(paths.filep(seqPath), 'Deleting file ' .. seqPath .. 'not found')

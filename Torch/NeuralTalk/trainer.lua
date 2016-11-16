@@ -1,6 +1,6 @@
 --[[
 --
---  code imitated https://github.com/facebook/fb.resnet.torch/blob/master/train.lua
+--  code from https://github.com/facebook/fb.resnet.torch/blob/master/train.lua
 --
 --  The training loop and learning rate schedule
 --
@@ -9,6 +9,8 @@ require 'torch'
 require 'cutorch'
 require 'nn'
 local optim = require 'optim'
+
+local netutils = require 'utils.netutils'
 
 local M = {}
 local Trainer = torch.class('cnn.Trainer', M)
@@ -68,6 +70,7 @@ function Trainer:__init(model, criterion, opt, optimConfig)
 	self.opt = opt
 	self.params, self.gradParams = self.feature2seq:getParameters()
 	self.cnnParams, self.cnnGradParams = self.cnn:getParameters()
+	collectgarbage()
 end
 
 function Trainer:train(epoch, dataloader, finetune, plotter)
@@ -138,12 +141,11 @@ function Trainer:train(epoch, dataloader, finetune, plotter)
 		lossSum = lossSum + loss*batchsize
 		N = N + batchsize
 
-		print((' | Epoch: [%d][%d/%d]    Time %.3f  Data %.3f  Loss %1.4f'):format(
-			epoch, n, trainSize, timer:time().real, dataTime, loss))
-
-		-- check that the storage didn't get changed do to an unfortunate getParameters call
 		assert(self.params:storage() == self.feature2seq:parameters()[1]:storage())
 		assert(self.cnnParams:storage() == self.cnn:parameters()[1]:storage())
+
+		print((' | Epoch: [%d][%d/%d]    Time %.3f  Data %.3f  Loss %1.4f'):format(
+			epoch, n, trainSize, timer:time().real, dataTime, loss))
 
 		timer:reset()
 		dataTimer:reset()

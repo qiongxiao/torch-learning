@@ -35,11 +35,10 @@ function M.parse(arg)
 	------------- Checkpoint options ------------------
 	cmd:option('-save',				'checkpoints',	'Directory in which to save checkpoints')
 	cmd:option('-resume',			'none',			'Resume from the checkpoint in this directory')
-	cmd:option('-resumeType',		'latest',		'Options: latest | best')
+	cmd:option('-resumeType',		'latest',		'Options: latest | best | finetune')
 	cmd:option('-checkEvery',		1,				'checkpoint every # epcoh: -1 disable | positve integer')
 	cmd:option('-maxCheckpointsNum',5,				'max number of checkpoints: -1 disable | positve interger')
 	------------- Plotting options --------------------
-	cmd:option('-plotPath',			'plot/out',	'Path to output plot file (excluding .json)')
 	cmd:option('-plotEvery',		0,			'Whether to plot every iteration')
 	------------- Optimization options ----------------
 	cmd:option('-gradClip',			0.1,		'clip gradients at this value (note should be lower than usual 5 because we normalize grads by both batch and seq_length)')

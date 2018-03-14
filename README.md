@@ -1,4 +1,7 @@
-# NN-Learning
+torch-Learning
+==============
+
+(Latest update: 2016/10/30)
 
 ## Introduction
 
